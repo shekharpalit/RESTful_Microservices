@@ -7,7 +7,7 @@ conn = sqlite3.connect('test_user.db')
 c =conn.cursor()
 
 
-#create user
+#create user other
 @app.route('/user', methods=['POST'])
 def about():
     if request.method == 'POST':
