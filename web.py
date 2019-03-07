@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask,request
 from flask import jsonify
 import json
 from flask import g
@@ -20,87 +20,88 @@ def tcreate():
     conn.commit()
     return "table created"
 
-@app.route('/post')
-def tpost():
-    conn=sqlite3.connect('art.db')
-    c=conn.cursor()
-
-    id="10"
-    text="this is 10th article"
-    title="i am ten"
-    author="prakash"
-    tcreate="2015-05-22 01:01:01.000"
-    tmod="2016-05-22 01:01:01.000"
-
-    c.execute("INSERT INTO post_article VALUES (:aid,:atext,:atitle,:aut,:atcreate,:atmod)",{'aid':id,'atext':text,'atitle':title,'aut':author,'atcreate':tcreate,'atmod':tmod})
-    conn.commit()
-    conn.close()
-    return "Data inserted"
-
-@app.route('/get')
-def tget():
-    conn=sqlite3.connect('art.db')
-    c=conn.cursor()
-    c.execute('''Select * from post_article''')
-    row = c.fetchall()
-    #user = query_db('select * from users where username = ?',[the_username], one=True)
-    conn.commit()
-    return jsonify(row)
-
-@app.route('/get_latest')
-def tget_latest():
-    conn=sqlite3.connect('art.db')
-    c=conn.cursor()
-    c.execute('''select art,time_created from post_article order by time_created desc limit 1''')
-    row = c.fetchall()
-    #user = query_db('select * from users where username = ?',[the_username], one=True)
-    conn.commit()
-    return jsonify(row)
-
-@app.route('/art_find/<id>')
-def art_find(id):
-    conn=sqlite3.connect('art.db')
-    c=conn.cursor()
-    c.execute("Select * from post_article where id=?",(id))
-    row = c.fetchall()
-    #user = query_db('select * from users where username = ?',[the_username], one=True)
-    conn.commit()
-    return jsonify(row)
-
-
-
-@app.route('/art_edit/<id>')
-def art_edit(id):
-    conn=sqlite3.connect('art.db')
-    c=conn.cursor()
-    text="this was article but modified"
-    id=id
-    tmod= datetime.now()
-    c.execute("UPDATE post_article SET art =:atext,lmod_time=:atmod WHERE ID = :aid",{'aid':id,'atext':text,'atmod':tmod})
-    row = c.fetchall()
-    #user = query_db('select * from users where username = ?',[the_username], one=True)
-    conn.commit()
-    return "data edited with current time stamp"
 
 
 
 
 
+@app.route('/restarticle',methods = ['GET', 'POST', 'DELETE'])
+def tget2():
+    if(request.method=='GET'):
+        conn=sqlite3.connect('art.db')
+        c=conn.cursor()
+        c.execute('''Select * from post_article''')
+        row = c.fetchall()
+        #user = query_db('select * from users where username = ?',[the_username], one=True)
+        conn.commit()
+        return jsonify(row)
+    if(request.method=='POST'):
+        conn=sqlite3.connect('art.db')
+        c=conn.cursor()
 
-@app.route('/q/<id>')
-def query_db(query, args=(), one=False):
-    cur = get_db().execute('select * from post_article where id = ?', args)
-    rv = cur.fetchall()
-    cur.close()
-    return (rv[0] if rv else None) if one else rv
+        id=request.form.get('id')
+        text=request.form.get('text')
+        title=request.form.get('title')
+        author=request.form.get('author')
+        tcreate=request.form.get('tcreate')
+        tmod=request.form.get('tmod')
+
+        c.execute("INSERT INTO post_article VALUES (:aid,:atext,:atitle,:aut,:atcreate,:atmod)",{'aid':id,'atext':text,'atitle':title,'aut':author,'atcreate':tcreate,'atmod':tmod})
+        conn.commit()
+        conn.close()
+        return "Data inserted"
+
+    if(request.method=='DELETE'):
+        conn=sqlite3.connect('art.db')
+        c=conn.cursor()
+        tmod= datetime.now()
+        id=request.form.get('id')
+        sql = 'DELETE FROM post_article WHERE id=?'
+        c.execute(sql, (id,))
+        conn.commit()
+        return "artile deleted"
+        
+
+
+@app.route('/restarticle/sort',methods = ['GET', 'POST', 'DELETE'])
+def tget3():
+    if(request.method=='POST'):
+        conn=sqlite3.connect('art.db')
+        c=conn.cursor()
+        id=request.form.get('id')
+        sql = 'select art,time_created from post_article order by time_created desc limit ?'
+        c.execute(sql, (id,))
+        row = c.fetchall()
+        conn.commit()
+        return jsonify(row)
 
 
 
 
+@app.route('/restarticle/edit',methods = ['GET', 'POST', 'DELETE'])
+def tget4():
+    if(request.method=='POST'):
+        conn=sqlite3.connect('art.db')
+        c=conn.cursor()
+        id=request.form.get('id')
+        text=request.form.get('text')
+        tmod= datetime.now()
+        c.execute("UPDATE post_article SET art =:atext,lmod_time=:atmod WHERE ID = :aid",{'aid':id,'atext':text,'atmod':tmod})
+        row = c.fetchall()
+        conn.commit()
+        return jsonify(row)
 
-
-
-
+@app.route('/restarticle/find',methods = ['GET', 'POST', 'DELETE'])
+def tget5():
+    if(request.method=='POST'):
+        conn=sqlite3.connect('art.db')
+        c=conn.cursor()
+        id=request.form.get('id')
+        sql = 'Select * from post_article where id=?'
+        c.execute(sql, (id,))
+        row = c.fetchall()
+        conn.commit()
+        return jsonify(row)
 
 
 
@@ -108,21 +109,7 @@ def query_db(query, args=(), one=False):
 def hello():
     return "Home"
 
-@app.route('/post/new')
-def post_art():
 
-
-    return json.dumps(Article())
-
-
-@app.route('/articles')
-def articles():
-
-    return json.dumps(Article())
-
-@app.route('/art/<id>')
-def artid(id):
-    return json.dumps(Articleid(id))
 
 if __name__ == '__main__':
     app.run(debug=True)
