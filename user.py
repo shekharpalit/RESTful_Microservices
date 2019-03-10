@@ -1,43 +1,74 @@
 from flask import Flask, request
 import sqlite3
-from user import User
+import datetime
+from flask_basicauth import BasicAuth
+#from user import User
 
 app = Flask(__name__)
-conn = sqlite3.connect('test_user.db')
-c =conn.cursor()
+app.config['BASIC_AUTH_USERNAME'] = 'john3'
+app.config['BASIC_AUTH_PASSWORD'] = 'matrix'
+basic_auth = BasicAuth(app)
+app.config['BASIC_AUTH_FORCE'] = True
+@app.route('/')
+@basic_auth.required
+def auth():
+    return "Authenticated"
 
 
+@app.route('/createUser', methods=['POST'])
+def createDB():
+    conn = sqlite3.connect('test_user.db')
+    c =conn.cursor()
+    conn.execute('CREATE TABLE if not exists users (user_id INTEGER PRIMARY KEY NOT NULL, user_name TEXT NOT NULL,  hash_pwd TEXT NOT NULL, name TEXT NOT NULL, email_id TEXT NOT NULL,  date_created DATE NOT NULL, is_active INTEGER NOT NULL)')
+
+#remaining handle sql query fail and return the status codes
 #create user other
 @app.route('/user', methods=['POST'])
-def about():
+
+def insertUser():
     if request.method == 'POST':
-        userData = request.get_json()
-        # write something for hashed password
-        # sending hardcoded 1 for active users
-        # write something for current data
-        # BASIC AUTHENTICATION MODULE IMPLEMENTATION
-        with conn:
-            c.execute("INSERT INTO users VALUES (:user_name,:hash_pwd,:name, :email_id, :date_created, :is_active )",
-             {'user_name':userData`.user_name, 'hash_pwd':userData.hash_pwd, 'name':emp.name, 'email_id':userData.email_id, 'date_created':userData.date_created
-             'is_active':1})
-             #return status code of query execution
+        userData =request.get_json(force= True)
+        date_created =datetime.date.today()
+        is_active =1
+        with sqlite3.connect('test_user.db') as conn:
+            cur = conn.cursor()
+            result = cur.execute("""INSERT INTO users (user_name, hash_pwd, name, email_id, date_created, is_active ) VALUES (:user_name,:hash_pwd,:name, :email_id, :date_created, :is_active )""",{"user_name":userData['user_name'], "hash_pwd":userData['hash_pwd'], "name":userData['name'], "email_id":userData['email_id'], "date_created":date_created,"is_active":is_active}).rowcount
+            if (result >=1):
+                return "User successfully added \n "
+            else:
+                return "Failed to add user"
+
+
 
 #update user
 @app.route('/user', methods=['PUT'])
 def articles():
-    if request.method == 'POST':
-        userData = request.get_json()
-        #get something here for changing password
-        with conn:
-            c.execute("""UPDATE users SET name=:name, email_id:email_id, hash_pwd:hash_pwd
-                        WHERE id:= id """, {'name':userData.first, 'email_id':userData.email_id, 'hash_pwd':hash_pwd})
+    if request.method == 'PUT':
+        userData = request.get_json(force= True)
+        with sqlite3.connect('test_user.db') as conn:
+            cur =conn.cursor()
+            result =cur.execute("""UPDATE users SET hash_pwd=:hash_pwd WHERE user_id=:user_id AND EXISTS(SELECT 1 FROM users WHERE user_id=:user_id AND is_active=1) """, {"hash_pwd":userData['hash_pwd'], "user_id":userData['user_id']}).rowcount
+            if(result >=1):
+                return "Password updated successfully"
+            else:
+                return "User does not exists \n "
+
 
 
 #delete user
 @app.route('/user', methods=['DELETE'])
-def article(id):
-    #BASIC AUTHENTICATION FOR DELETE
-    return render_template('article.html',  id=id)
+def article():
+    if request.method =="DELETE":
+        userData = request.get_json(force= True)
+        with sqlite3.connect('test_user.db') as conn:
+            c =conn.cursor()
+            result =c.execute("""UPDATE users SET is_active = :is_active WHERE user_id=:user_id """, {"is_active":0,"user_id":userData['user_id']}).rowcount
+        if(result>=1):
+            return "User Deleted Successfully"
+        else:
+            return "User Deletion Failed"
+
+
 
 if __name__== "__main__":
     app.run(debug =True)
