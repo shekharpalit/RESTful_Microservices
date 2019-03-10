@@ -7,22 +7,21 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-#c =conn.cursor()
-
 @app.route('/comment', methods = ['POST'])
 
 def comment():
-    #conn = sqlite3.connect('example.db')
-    #c = conn.cursor()
     if request.method == 'POST':
         data = request.get_json(force=True)
 
         with sqlite3.connect('com.db') as conn:
-            cur = conn.cursor()
-            tmod = datetime.now()
-            cur.execute("INSERT INTO comments (comment, art_id, tag_ID, timestamp) VALUES (:comment, :art_id, :tag_ID, :timestamp) ",{"comment":data['comment'], "art_id":data['art_id'], "tag_ID":data['tag_ID'], "timestamp": tmod})
-    return "Comment inserted successfully \n"
-
+            try:
+                cur = conn.cursor()
+                tmod = datetime.now()
+                cur.execute("INSERT INTO comments (comment, art_id, tag_ID, timestamp) VALUES (:comment, :art_id, :tag_ID, :timestamp) ",{"comment":data['comment'], "art_id":data['art_id'], "tag_ID":data['tag_ID'], "timestamp": tmod})
+                return "Comment inserted successfully \n"
+            except sqlite3.Error as er:
+                print('er:', er.message)
+                
 @app.route('/comment', methods = ['DELETE'])
 
 def deleteComment():
@@ -39,30 +38,20 @@ def retriveComments():
         data = request.args.get('art_id')
         data1 = request.args.get('number')
         with sqlite3.connect('com.db') as conn:
-            if data:
+            if data is not None and data1 is not None:
+                cur = conn.cursor()
+                dateTime = conn.cursor()
+                dateTime.execute("SELECT timestamp, comment FROM(SELECT * FROM comments WHERE art_id="+data+" ORDER BY timestamp DESC LIMIT :data1)",{"data1":data1})
+                date = dateTime.fetchall()
+                conn.commit()
+                return jsonify(date)
+            if data is not None and data1 is None:
+                data = request.args.get('art_id')
                 cur = conn.cursor()
                 cur.execute("SELECT comment from comments WHERE art_id ="+data)
                 row = cur.fetchall()
                 conn.commit()
                 return jsonify(row)
-            if data != None and data1 != None:
-                cur = conn.cursor()
-                dateTime = conn.cursor()
-                dateTime.execute("SELECT timestamp, message FROM(SELECT * FROM comments ORDER BY timestamp DESC LIMIT 3 ) T1 ORDER BY timestamp")
-                cur.execute("SELECT comment from comments WHERE art_id ="+data)
-                date = dateTime.fetchall().sort(reverse = True)
-                return jsonify(date)
-
-    '''
-    SELECT timestamp, message
-FROM
-(
-     SELECT *
-     FROM your_table
-     ORDER BY timestamp DESC
-     LIMIT 3
-) T1
-ORDER BY timestamp'''
 
 @app.route('/comment', methods =['PATCH'])
 def retriveNComments():
@@ -70,7 +59,8 @@ def retriveNComments():
         data = request.get_json(force = True)
         with sqlite3.connect('com.db') as conn:
             cur = conn.cursor()
-            cur.execute("UPDATE comments set comment = ? where art_id =?",  (data['comment'], data['art_id']))
+            tmod = datetime.now()
+            cur.execute("UPDATE comments set comment = ?,timestamp=? where art_id =? AND comment_id =?",  (data['comment'],tmod, data['art_id'], data['comment_id']))
     return "Comments modified successfully\n"
 
 
