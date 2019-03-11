@@ -1,18 +1,18 @@
-from flask import Flask, request
+import os
+from flask import Flask, request, jsonify, make_response, g, current_app, Response
+from passlib.apps import custom_app_context as pwd_context
+from flask_httpauth import HTTPBasicAuth
+from functools import wraps
 import sqlite3
 import datetime
 from flask_basicauth import BasicAuth
+from functools import wraps
 #from user import User
 
+
+
 app = Flask(__name__)
-app.config['BASIC_AUTH_USERNAME'] = 'john3'
-app.config['BASIC_AUTH_PASSWORD'] = 'matrix'
 basic_auth = BasicAuth(app)
-app.config['BASIC_AUTH_FORCE'] = True
-@app.route('/')
-@basic_auth.required
-def auth():
-    return "Authenticated"
 
 
 @app.route('/createUser', methods=['POST'])
@@ -23,6 +23,7 @@ def createDB():
 
 #remaining handle sql query fail and return the status codes
 #create user other
+
 @app.route('/user', methods=['POST'])
 
 def insertUser():
@@ -41,7 +42,9 @@ def insertUser():
 
 
 #update user
+
 @app.route('/user', methods=['PUT'])
+
 def articles():
     if request.method == 'PUT':
         userData = request.get_json(force= True)
@@ -56,7 +59,9 @@ def articles():
 
 
 #delete user
+
 @app.route('/user', methods=['DELETE'])
+
 def article():
     if request.method =="DELETE":
         userData = request.get_json(force= True)
@@ -71,4 +76,4 @@ def article():
 
 
 if __name__== "__main__":
-    app.run(debug =True)
+    app.run(debug=True, port=5000)
