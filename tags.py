@@ -7,56 +7,50 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-@app.route('/tags', methods = ['POST'])
 
+@app.route('/tags',methods = ['GET'])
+
+def getArticlesFromTag():
+    if request.method == 'GET':
+        data = request.args.get('tag')
+        print(len(data))
+        with sqlite3.connect('tags.db') as conn:
+            cur = conn.cursor()
+            tmod= datetime.now()
+            cur.execute("Select * from article where art_id IN(Select art_id from normTable where tag_ID in (Select tag_id from tags WHERE tag_name =:tag_name ))", {"tag_name":data})
+            row = cur.fetchall()
+            print(row)
+            return jsonify(row)
+
+@app.route('/tags', methods = ['POST'])
 def tags():
     if request.method == 'POST':
         data = request.get_json(force=True)
 
         with sqlite3.connect('tags.db') as conn:
             cur = conn.cursor()
+            #check if tag exists or not
             cur.execute("INSERT INTO tags VALUES (:tag_ID,:tag_name)",{"tag_ID":5,"tag_name": data['tag_name']})
             tag_ID = cur.lastrowid
             cur.execute("INSERT INTO normTable(tag_ID, art_id) SELECT :tag_ID, art_id FROM article WHERE article_title IN (:article_title)",(tag_ID,data['article_title']))
             return "tags inserted successfully \n"
 
-'''
+
 @app.route('/tags', methods = ['DELETE'])
 
-def deleteComment():
+def deleteTagFromArticle():
     if request.method == 'DELETE':
-        data = request.args.get('comment_id')
+        tag_name = request.args.get('tag_name')
+        art_id = request.args.get('art_id')
+        #print(tag_name+art_id)
         with sqlite3.connect('tags.db') as conn:
             cur = conn.cursor()
-            cur.execute("DELETE from comments WHERE comment_ID ="+data)
-    return "Deleted Successfully \n"
+            #check if tag name exists or not
+            cur.execute("delete from normTable where tag_ID IN ( Select tag_ID from tags WHERE tag_name =:tag_name) AND art_id=:art_id",{"tag_name":tag_name,"art_id":art_id})
+            #check for query result
+            conn.commit()
+    return "Tag Deleted"
 
-@app.route('/tags', methods = ['GET'])
-def retriveComments():
-    if request.method == 'GET':
-        data = request.args.get('art_id')
-        data1 = request.args.get('number')
-        with sqlite3.connect('tags.db') as conn:
-            cur = conn.cursor()
-            dateTime = conn.cursor()
-            dateTime.execute("SELECT timestamp, comment FROM(SELECT * FROM comments WHERE art_id="+data+" ORDER BY timestamp DESC LIMIT 3) T1 ORDER BY comment")
-            date = dateTime.fetchall()
-        return jsonify(date)
-
-'SELECT * FROM distro WHERE id IN (%s)' %
-                           ','.join('?'*len(desired_ids)), desired_ids)
-
-
-@app.route('/tags', methods =['PATCH'])
-def retriveNComments():
-    if request.method == 'PATCH':
-        data = request.get_json(force = True)
-        with sqlite3.connect('tags.db') as conn:
-            cur = conn.cursor()
-            tmod = datetime.now()
-            cur.execute("UPDATE comments set comment = ?,timestamp=? where art_id =? AND comment_id =?",  (data['comment'],tmod, data['art_id'], data['comment_id']))
-    return "Comments modified successfully\n"
-'''
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
