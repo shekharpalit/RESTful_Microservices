@@ -22,27 +22,24 @@ def tcreate():
 
 
 @app.route('/article',methods = ['POST'])
-def insertarticle():
+def insertArticle():
     if request.method == 'POST':
         data = request.get_json(force = True)
         with sqlite3.connect('art.db') as conn:
             cur = conn.cursor()
             tmod= datetime.now()
-            cur.execute("INSERT INTO post_article VALUES (:aid,:atext,:atitle,:aut,:atcreate,:atmod)",
-            'aid':data['aid'],'atext':data['atext'],'atitle':data['atitle'],'aut':data['aut'],'atcreate':data['tcreate'],'atmod':tmod})
+            cur.execute("INSERT INTO post_article VALUES (:aid,:atext,:atitle,:aut,:atcreate,:atmod)",{'aid':data['aid'],'atext':data['atext'],'atitle':data['atitle'],'aut':data['aut'],'atcreate':tmod,'atmod':tmod})
             #cur.execute("UPDATE post_article set art=?,lmod_time=? where id=?", (data['art'],tmod,data['id']))
     return "DAtA inserted"
 
 
 @app.route('/article',methods = ['GET'])
-def latestarticle():
+def latestArticle():
     if request.method == 'GET':
         data = request.args.get('art_id')
         data1 = request.args.get('number')
         with sqlite3.connect('art.db') as conn:
             if data is not None :
-                '''return "first one"
-'''
                 cur = conn.cursor()
                 tmod= datetime.now()
                 cur.execute("select * from post_article order by time_created desc limit :data",  {"data":data})
@@ -59,9 +56,22 @@ def latestarticle():
                 conn.commit()
                 return jsonify(row)
 
+@app.route('/article/view',methods = ['GET'])
+
+def Article():
+    if request.method == 'GET':
+        data = request.args.get('title')
+        print(data)
+        with sqlite3.connect('art.db') as conn:
+            cur = conn.cursor()
+            tmod= datetime.now()
+            cur.execute("select * from post_article where title like :data ", {"data":data})
+            row = cur.fetchall()
+            conn.commit()
+            return jsonify(row)
 
 @app.route('/article',methods = ['PATCH'])
-def updatearticle():
+def updateArticle():
     if request.method == 'PATCH':
         data = request.get_json(force = True)
         with sqlite3.connect('art.db') as conn:
@@ -70,7 +80,15 @@ def updatearticle():
             cur.execute("UPDATE post_article set art=?,lmod_time=? where id=?", (data['art'],tmod,data['id']))
     return "Rows Updated"
 
+@app.route('/article', methods = ['DELETE'])
 
+def deleteArticle():
+    if request.method == 'DELETE':
+        data = request.args.get('comment_id')
+        with sqlite3.connect('com.db') as conn:
+            cur = conn.cursor()
+            cur.execute("delete from post_article where title like ':article_title')",{"article_title":data['data']})
+    return "Article Deleted"
 
 
 
