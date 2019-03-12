@@ -111,9 +111,9 @@ def deleteTagFromArticle():
             print(er.message)
         finally:
             if executionState:
-                return jsonify(message="Deleted Tag SucessFully")
+                return jsonify(message="Deleted Tag SucessFully"),200
             else:
-                return jsonify(message="Failed to delete tags from article")
+                return jsonify(message="Failed to delete tags from article"),409
 
 
 
