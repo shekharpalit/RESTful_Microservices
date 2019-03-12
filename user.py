@@ -1,24 +1,64 @@
 import os
 from flask import Flask, request, jsonify, make_response, g, current_app, Response
 from passlib.apps import custom_app_context as pwd_context
-from flask_httpauth import HTTPBasicAuth
-from functools import wraps
 import sqlite3
 import datetime
 from flask_basicauth import BasicAuth
 from functools import wraps
-#from user import User
 
 
+def hash_password(password):
+    password_hash = pwd_context.encrypt(password)
+    return password_hash
+
+    def verify_password(password):
+        return pwd_context.verify(password, password_hash)
+
+def check_auth(username, password):
+    cur = get_db().cursor().execute("SELECT user_name, hash_pwd from users WHERE user_name=?", (username,))
+    row = cur.fetchall()
+    if row[0][0] == username and row[0][1] == password:
+        return True
+    else:
+        return False
+
+def authenticate():
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        try:
+            uid = request.authorization["username"]
+            pwd = request.authorization["password"]
+            if not uid or not pwd or check_auth(uid, pwd) == False:
+                return authenticate()
+            else:
+                return f(*args, **kwargs)
+        except:
+            return "Need authentication for this opetation\n"
+    return decorated
 
 app = Flask(__name__)
-<<<<<<< HEAD
+DATABASE = 'test_user.db'
 
-app.config['BASIC_AUTH_USERNAME'] = 'jon3'
-app.config['BASIC_AUTH_PASSWORD'] = 'matrix'
-=======
->>>>>>> a548f698645c74bf65900e191d09350a5ce207a3
-basic_auth = BasicAuth(app)
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)  #create a database instance and use it for later execution
+        print("database instance is created")
+    return db
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
 
 
 @app.route('/createUser', methods=['POST'])
@@ -31,53 +71,84 @@ def createDB():
 #create user other
 
 @app.route('/user', methods=['POST'])
-
-def insertUser():
+def InsertUser():
     if request.method == 'POST':
-        userData =request.get_json(force= True)
-        date_created =datetime.date.today()
-        is_active =1
-        with sqlite3.connect('test_user.db') as conn:
-            cur = conn.cursor()
-            result = cur.execute("""INSERT INTO users (user_name, hash_pwd, name, email_id, date_created, is_active ) VALUES (:user_name,:hash_pwd,:name, :email_id, :date_created, :is_active )""",{"user_name":userData['user_name'], "hash_pwd":userData['hash_pwd'], "name":userData['name'], "email_id":userData['email_id'], "date_created":date_created,"is_active":is_active}).rowcount
-            if (result >=1):
-                return "User successfully added \n "
+        executionState:bool = False
+        cur = get_db().cursor()
+        try:
+            data =request.get_json(force= True)
+            tmod = datetime.now()
+            is_active = 1
+            cur.execute("INSERT INTO users (user_name, hash_pwd, name, email_id, date_created, is_active ) VALUES (?, ?, ?, ?, ?, ?)",(data['user_name'], hash_password(data['hash_pwd']),data['name'],data['email_id'], tmod, is_active))
+            if(cur.rowcount >=1):
+                executionState = True
+            get_db().commit()
+        except:
+            get_db().rollback()
+            print("Error")
+        finally:
+            if executionState:
+                return jsonify(message="Data Instersted Sucessfully"), 200
             else:
-                return "Failed to add user"
+                return jsonify(message="Failed to insert data"), 409
+
 
 
 
 #update user
 
-@app.route('/user', methods=['PUT'])
-
-def articles():
-    if request.method == 'PUT':
-        userData = request.get_json(force= True)
-        with sqlite3.connect('test_user.db') as conn:
-            cur =conn.cursor()
-            result =cur.execute("""UPDATE users SET hash_pwd=:hash_pwd WHERE user_id=:user_id AND EXISTS(SELECT 1 FROM users WHERE user_id=:user_id AND is_active=1) """, {"hash_pwd":userData['hash_pwd'], "user_id":userData['user_id']}).rowcount
-            if(result >=1):
-                return "Password updated successfully"
+@app.route('/user', methods=['PATCH'])
+@requires_auth
+def UpdateUser():
+    if request.method == 'PATCH':
+        executionState:bool = False
+        cur = get_db().cursor()
+        try:
+            data  = request.get_json(force=True)
+            uid = request.authorization["username"]
+            pwd = request.authorization["password"]
+            cur.execute("UPDATE users SET hash_pwd=? WHERE user_name=? AND EXISTS(SELECT 1 FROM users WHERE user_name=? AND is_active=1)", (data['hash_pwd'], data['user_name'],data['user_name']))
+            if(cur.rowcount >=1):
+                executionState = True
+                get_db().commit()
+        except:
+            get_db().rollback()
+            print("Error")
+        finally:
+            if executionState:
+                return jsonify(message="Updated SucessFully"), 200
             else:
-                return "User does not exists \n "
-
+                return jsonify(message="Failed to update the data"), 409
 
 
 #delete user
 
 @app.route('/user', methods=['DELETE'])
-
-def article():
+@requires_auth
+def DeleteUser():
     if request.method =="DELETE":
-        userData = request.get_json(force= True)
-        with sqlite3.connect('test_user.db') as conn:
-            c =conn.cursor()
-            result =c.execute("""UPDATE users SET is_active = :is_active WHERE user_id=:user_id """, {"is_active":0,"user_id":userData['user_id']}).rowcount
-        if(result>=1):
-            return "User Deleted Successfully"
-        else:
-            return "User Deletion Failed"
+        executionState:bool = False
+        cur = get_db().cursor()
+        try:
+            uid = request.authorization["username"]
+            pwd = request.authorization["password"]
+            cur.execute("UPDATE users SET is_active =? WHERE user_name=? ", (0,uid))
+
+            if cur.rowcount >= 1:
+                executionState = True
+            get_db().commit()
+
+        except:
+            get_db().rollback()
+            print("Error")
+        finally:
+            if executionState:
+                return jsonify(message="Data SucessFully deleted"), 200
+            else:
+                return jsonify(message="Failed to delete data"), 409
+
+
+
 
 
 
