@@ -13,28 +13,29 @@ app = Flask(__name__)
 
 @app.route('/create')
 def tcreate():
-    conn=sqlite3.connect('art.db')
+    #conn=sqlite3.connect('art.db')
+    conn=sqlite3.connect('main.db')
     c=conn.cursor()
-
-    c.execute('''Create table article(article_id integer PRIMARY KEY,title text,author text,content text,date_created text,date_modified text,isActiveArticle  integer,URL text)''')
+    c.execute('''Create table article(article_id integer PRIMARY KEY,title text,author text,content text,date_created text,date_modified text,isActiveArticle  integer,url text)''')
     conn.commit()
     return "table created"
 
 #insert articles
-@app.route('/article',methods = ['POST','PATCH'])
+@app.route('/article',methods = ['POST'])
 def insertarticle():
     if request.method == 'POST':
         data = request.get_json(force = True)
-        with sqlite3.connect('art.db') as conn:
+        with sqlite3.connect('main.db') as conn:
             cur = conn.cursor()
             current_time= datetime.datetime.now()
-            isActiveArticle=1
-            cur.execute("INSERT INTO article(title,author,date_created,date_modified,isActiveArticle,URL) VALUES (:title,:author,:date_created,:date_modified,:isActiveArticle,:URL)",{"title":data['title'],"author":data['author'],"date_created":current_time,"date_modified":current_time,"isActiveArticle":isActiveArticle,"URL":data['URL']})
-            tag_ID = cur.lastrowid
+            is_active_article=1
+            cur.execute("INSERT INTO article(title,author,content,date_created,date_modified,is_active_article) VALUES (:title,:author,:content,:date_created,:date_modified,:is_active_article)",{"title":data['title'],"author":data['author'],"content":data['content'],"date_created":current_time,"date_modified":current_time,"is_active_article":is_active_article })
+            inserted_article_id = cur.lastrowid
 
-            url_article=("http://127.0.0.1:5000/article/"+str(tag_ID)+".")
-            cur.execute("UPDATE article set URL=? where article_id=?",(url_article,tag_ID))
-    return "DAtA inserted"
+            url_article=("http://127.0.0.1:5000/article/"+str(inserted_article_id)+"")
+            cur.execute("UPDATE article set url=? where article_id=?",(url_article,inserted_article_id))
+            conn.commit()
+    return "Article Created Successfully",201
 
 
             #cur.execute("UPDATE post_article set art=?,lmod_time=? where id=?", (data['art'],tmod,data['id']))
@@ -45,11 +46,11 @@ def latestArticle():
     if request.method == 'GET':
         data = request.args.get('limit')
         data1 = request.args.get('number')
-        with sqlite3.connect('art.db') as conn:
+        with sqlite3.connect('main.db') as conn:
             if data is not None :
                 cur = conn.cursor()
 
-                cur.execute("select * from article  where isActiveArticle = 1 order by date_created desc limit :data",  {"data":data})
+                cur.execute("select * from article  where is_active_article = 1 order by date_created desc limit :data",  {"data":data})
                 row = cur.fetchall()
                 conn.commit()
                 return jsonify(row)
@@ -63,8 +64,8 @@ def latestArticle():
                 conn.commit()
                 return jsonify(row)
 
-            
-# get single article by name.....multiple url /article same get method         
+
+# get single article by name.....multiple url /article same get method
 '''
 @app.route('/article',methods = ['GET'])
 
@@ -81,7 +82,7 @@ def Article():
             return jsonify(row)
 '''
 
-# update article 
+# update article
 
 @app.route('/article1',methods = ['PATCH'])
 def updateArticle():

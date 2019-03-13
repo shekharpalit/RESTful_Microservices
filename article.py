@@ -31,10 +31,10 @@ def insertarticle():
                 cur = conn.cursor()
                 current_time= datetime.datetime.now()
                 isActiveArticle=1
-                cur.execute("INSERT INTO article(title,author,date_created,date_modified,isActiveArticle,url) VALUES (:title,:author,:date_created,:date_modified,:isActiveArticle,:URL)",{"title":data['title'],"author":data['author'],"date_created":current_time,"date_modified":current_time,"isActiveArticle":isActiveArticle,"URL":data['URL']})
-                author_ID = cur.lastrowid
-                url_article=("http://127.0.0.1:5000/article/"+str(author_ID)+"")
-                cur.execute("UPDATE article set URL=? where article_id=?",(url_article,author_ID))
+                cur.execute("INSERT INTO article(title,author,date_created,date_modified,isActiveArticle,url) VALUES (:title,:author,:date_created,:date_modified,:isActiveArticle,:url)",{"title":data['title'],"author":data['author'],"date_created":current_time,"date_modified":current_time,"isActiveArticle":isActiveArticle,"url":data['url']})
+                last_inserted_row = cur.lastrowid
+                url_article=("http://127.0.0.1:5000/article/"+str(last_inserted_row)+"")
+                cur.execute("UPDATE article set url=? where article_id=?",(url_article,last_inserted_row))
                 if(cur.rowcount >=1):
                     executionState = True
                     conn.commit()
