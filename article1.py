@@ -20,7 +20,7 @@ def tcreate():
     conn.commit()
     return "table created"
 
-
+#insert articles
 @app.route('/article',methods = ['POST','PATCH'])
 def insertarticle():
     if request.method == 'POST':
@@ -39,7 +39,7 @@ def insertarticle():
 
             #cur.execute("UPDATE post_article set art=?,lmod_time=? where id=?", (data['art'],tmod,data['id']))
 
-
+#get latest n article and get all article
 @app.route('/article',methods = ['GET'])
 def latestArticle():
     if request.method == 'GET':
@@ -62,8 +62,11 @@ def latestArticle():
                 row = cur.fetchall()
                 conn.commit()
                 return jsonify(row)
+
+            
+# get single article by name.....multiple url /article same get method         
 '''
-@app.route('/article/view',methods = ['GET'])
+@app.route('/article',methods = ['GET'])
 
 def Article():
     if request.method == 'GET':
@@ -77,6 +80,9 @@ def Article():
             conn.commit()
             return jsonify(row)
 '''
+
+# update article 
+
 @app.route('/article1',methods = ['PATCH'])
 def updateArticle():
     if request.method == 'PATCH':
@@ -89,8 +95,10 @@ def updateArticle():
             cur.execute("UPDATE article set content=?,date_modified=? where article_id=?", (data['content'],tmod,data['article_id']))
     return "Rows Updated"
 
-@app.route('/article', methods = ['DELETE'])
 
+#delete article by article id
+
+@app.route('/article', methods = ['DELETE'])
 def deleteArticle():
     if request.method == 'DELETE':
         article_id = request.args.get('article_id')
@@ -98,13 +106,6 @@ def deleteArticle():
             cur = conn.cursor()
             cur.execute("delete from post_article where title like ':title')",{"title":data['article_id']})
     return "Article Deleted"
-
-
-
-
-
-
-
 
 
 
