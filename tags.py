@@ -3,7 +3,7 @@ from flask import jsonify
 import json
 import sqlite3
 from datetime import datetime
-
+from DatabaseInstance import get_db
 
 app = Flask(__name__)
 
@@ -12,22 +12,20 @@ app = Flask(__name__)
 def getArticlesFromTag():
     if request.method == 'GET':
         data = request.args.get('tag')
-        with sqlite3.connect('tags.db') as conn:
-            cur = conn.cursor()
-            tmod= datetime.now()
-            cur.execute("Select * from article where art_id IN(Select art_id from normTable where tag_ID in (Select tag_id from tags WHERE tag_name =:tag_name ))", {"tag_name":data})
-            row = cur.fetchall()
-            return jsonify(row)
+        cur = get_db().cursor()
+        tmod= datetime.now()
+        cur.execute("Select * from article where article_id IN(Select article_id from tag_article_mapping where tag_id in (Select tag_id from tags WHERE tag_name =:tag_name ))", {"tag_name":data})
+        row = cur.fetchall()
+        return jsonify(row),200
 
 #get tags from the url utility
-@app.route('/tags/<string:art_id>',methods = ['GET'])
-def getTagsFromArticle(art_id):
+@app.route('/tags/<string:article_id>',methods = ['GET'])
+def getTagsFromArticle(article_id):
     if request.method == 'GET':
-        with sqlite3.connect('tags.db') as conn:
-            cur = conn.cursor()
-            cur.execute("SELECT tag_name from tags WHERE tag_ID IN (SELECT tag_ID from normTable WHERE art_id=:art_id )", {"art_id":art_id})
-            row = cur.fetchall()
-            return jsonify(row)
+        cur = get_db().cursor()
+        cur.execute("SELECT tag_name from tags WHERE tag_id IN (SELECT tag_id from tag_article_mapping WHERE article_id=:article_id )", {"article_id":article_id})
+        row = cur.fetchall()
+        return jsonify(row),200
 
 
 @app.route('/tags', methods = ['POST'])
@@ -36,19 +34,17 @@ def tags():
         data = request.get_json(force=True)
         executionState:bool = False
         try:
-            with sqlite3.connect('tags.db') as conn:
-            cur = conn.cursor()
+            cur = get_db().cursor()
             #check if tag exists or not
-            cur.execute("INSERT INTO tags VALUES (:tag_ID,:tag_name)",{"tag_ID":5,"tag_name": data['tag_name']})
-            tag_ID = cur.lastrowid
-            cur.execute("INSERT INTO normTable(tag_ID, art_id) SELECT :tag_ID, art_id FROM article WHERE article_title IN (:article_title)",(tag_ID,data['article_title']))
+            cur.execute("INSERT INTO tags VALUES (:tag_name)",{"tag_name": data['tag_name']})
+            tag_id = cur.lastrowid
+            cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id) SELECT :tag_id, article_id FROM article WHERE article_title IN (:article_title)",(tag_id,data['article_title']))
             if (cur.rowcount >=1):
                 executionState =True
-            conn.commit()
-        except sqlite3.Error as er:
-            conn.rollback()
-            print("Error:")
-            print(er.message)
+            get_db().commit()
+        except:
+            get_db().rollback()
+            print("Error")
         finally:
             if executionState:
                 return jsonify(message="Tags inserted successfully \n"),201
@@ -66,24 +62,23 @@ def addTagsToExistingArticle():
         executionState:bool = False
         try:
             for tag in tags:
-                    with sqlite3.connect('tags.db') as conn:
-                        cur = conn.cursor()
-                        cur.execute("SELECT tag_ID FROM tags WHERE tag_name=:tag_name",{"tag_name":tag})
-                        result = cur.fetchone()
-                        if str(result)!="None":
-                            tag_id =str(result[0])
-                            #add the new tag here
-                            #insert the relation if not exists
-                            cur.execute("INSERT INTO normTable(tag_ID, art_id) SELECT (:tag_id),(:art_id) WHERE NOT EXISTS(SELECT 1 FROM normTable WHERE tag_ID= :tag_id  AND art_id = :art_id)", {"tag_id":tag_id, "art_id":data['art_id']})
-                        elif str(result)=="None":
-                            cur.execute("INSERT INTO tags(tag_name) VALUES(:tag_name)",{"tag_name":tag})
-                            new_tag_inserted_id =cur.lastrowid
-                            cur.execute("INSERT INTO normTable(tag_ID, art_id)VALUES(:tag_ID, :art_id)",{"tag_ID":new_tag_inserted_id,"art_id":data['art_id']})
-        except sqlite3.Error as er:
-            conn.rollback()
-            print("Error:")
+                    cur = get_db().cursor()
+                    cur.execute("SELECT tag_id FROM tags WHERE tag_name=:tag_name",{"tag_name":tag})
+                    result = cur.fetchone()
+                    if str(result)!="None":
+                        tag_id =str(result[0])
+                        #add the new tag here
+                        #insert the relation if not exists
+                        cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id) SELECT (:tag_id),(:article_id) WHERE NOT EXISTS(SELECT 1 FROM tag_article_mapping WHERE tag_id= :tag_id  AND article_id = :article_id)", {"tag_id":tag_id, "article_id":data['article_id']})
+                    elif str(result)=="None":
+                        cur.execute("INSERT INTO tags(tag_name) VALUES(:tag_name)",{"tag_name":tag})
+                        new_tag_inserted_id =cur.lastrowid
+                        cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id)VALUES(:tag_id, :article_id)",{"tag_id":new_tag_inserted_id,"article_id":data['article_id']})
+        except:
+            get_db().rollback()
+            print("Error")
             #print(er.args[0])
-            print(er.message)
+            #print(er.message)
         finally:
             if executionState:
                 return jsonify(message="Added Tags to an existing article"),201
@@ -96,19 +91,17 @@ def addTagsToExistingArticle():
 def deleteTagFromArticle():
     if request.method == 'DELETE':
         tag_name = request.args.get('tag_name')
-        art_id = request.args.get('art_id')
-        #print(tag_name+art_id)
+        article_id = request.args.get('article_id')
+        #print(tag_name+article_id)
         try:
-            with sqlite3.connect('tags.db') as conn:
-                cur = conn.cursor()
-                #check if tag name exists or not
-                cur.execute("delete from normTable where tag_ID IN ( Select tag_ID from tags WHERE tag_name =:tag_name) AND art_id=:art_id",{"tag_name":tag_name,"art_id":art_id})
-                #check for query result
-                conn.commit()
-        except sqlite3.Error as er:
-            conn.rollback()
-            print("Error:")
-            print(er.message)
+            cur = get_db().cursor()
+            #check if tag name exists or not
+            cur.execute("delete from tag_article_mapping where tag_id IN ( Select tag_id from tags WHERE tag_name =:tag_name) AND article_id=:article_id",{"tag_name":tag_name,"article_id":article_id})
+            #check for query result
+            get_db().commit()
+        except:
+            get_db().rollback()
+            print("Error")
         finally:
             if executionState:
                 return jsonify(message="Deleted Tag SucessFully"),200
