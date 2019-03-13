@@ -1,0 +1,20 @@
+1.get all article
+curl -GET "http://127.0.0.1:5000/article"
+
+2.Get latest n article
+curl -GET "http://127.0.0.1:5000/article?limit=2"
+
+3.Get article by title
+curl -GET "http://127.0.0.1:5000/article/find?title="yyy""
+
+4.Get article from url(url+article)
+curl -GET "http://127.0.0.1:5000/article/8"
+
+5.Insert new article
+curl http://127.0.0.1:5000/article -d  '{"title" : "yyy","content" : "once four ","author" : "masu","URL":"http://127.0.0.1:5000/article/7"}'
+
+6.Update content of article
+curl -X PATCH --data '{"content": "edited","article_id":8}' http://127.0.0.1:5000/article
+
+7.delete article
+curl  -X "DELETE" http://127.0.0.1:5000/article?article_id=7
