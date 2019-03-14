@@ -4,22 +4,14 @@ import json
 from flask import g
 import sqlite3
 import datetime
-import datetime
-from DatabaseInstance import get_db()
+from DatabaseInstance import get_db
+from authentication import *
 
 app = Flask(__name__)
 
-
-
-@app.route('/createArticle',methods = ['GET'])
-def createArticleTable():
-    c=get_db().cursor()
-    c.execute('''Create table if not exists article(article_id integer PRIMARY KEY,title text,author text,content text,date_created text,date_modified text,isActiveArticle  integer,url text)''')
-    conn.commit()
-    return "table created",201
-
 #insert articles
 @app.route('/article',methods = ['POST'])
+@requires_auth
 def insertarticle():
     if request.method == 'POST':
         data = request.get_json(force = True)
@@ -27,14 +19,16 @@ def insertarticle():
         try:
             cur = get_db().cursor()
             current_time= datetime.datetime.now()
-            isActiveArticle=1
-            cur.execute("INSERT INTO article(title,author,date_created,date_modified,isActiveArticle,url) VALUES (:title,:author,:date_created,:date_modified,:isActiveArticle,:url)",{"title":data['title'],"author":data['author'],"date_created":current_time,"date_modified":current_time,"isActiveArticle":isActiveArticle,"url":data['url']})
+            is_active_article=1
+            uid = request.authorization["username"]
+            pwd = request.authorization["password"]
+            cur.execute("INSERT INTO article(title,author,content,date_created,date_modified,is_active_article) VALUES (:title, :author, :content, :date_created, :date_modified, :is_active_article)",{"title":data['title'],"author":uid,"content": data['content'], "date_created":current_time,"date_modified":current_time,"is_active_article":is_active_article })
             last_inserted_row = cur.lastrowid
             url_article=("http://127.0.0.1:5000/article/"+str(last_inserted_row)+"")
             cur.execute("UPDATE article set url=? where article_id=?",(url_article,last_inserted_row))
             if(cur.rowcount >=1):
                     executionState = True
-                    get_db().commit()
+            get_db().commit()
         except:
             get_db().rollback()
             print("Error")
@@ -50,59 +44,60 @@ def insertarticle():
 #get latest n article and get all article
 @app.route('/article',methods = ['GET'])
 def latestArticle():
-    if request.method == 'GET':
-        data = request.args.get('limit')
-        if data is not None :
-            cur = get_db().cursor()
-            cur.execute("select * from article  where isActiveArticle = 1 order by date_created desc limit :data",  {"data":data})
-            row = cur.fetchall()
-            return jsonify(row)
-
-        #limit = request.args.get('limit')
-        if data is None:
-            cur = get_db().cursor()
-            cur.execute('''Select * from article''')
-            row = cur.fetchall()
-            return jsonify(row)
-
-#get article from url...article id needed
-@app.route('/article/<string:art_id>',methods = ['GET'])
-def getTagsFromArticle(art_id):
-    if request.method == 'GET':
+    if request.method == 'GET': # try except
         cur = get_db().cursor()
-        article_id=art_id
-        sql=("SELECT * from  article WHERE article_id="+article_id)
-        cur.execute(sql)
-        row = cur.fetchall()
-        return jsonify(row)
+        limit = request.args.get('limit')
+        article_id = request.args.get('article_id')
+        title = request.args.get('title')
+        try:
+            if limit is not None :
+                cur = conn.cursor()
+                cur.execute("select * from article  where isActiveArticle = 1 order by date_created desc limit :data",  {"data":data})
+                row = cur.fetchall()
+                if list(row) == []:
+                    executionState = False
+                return jsonify(row)
 
-# get single article by name.....multiple url /article same get method
-
-@app.route('/article/find',methods = ['GET'])
-def Article():
-    if request.method == 'GET':
-        data = request.args.get('title')
-        cur = get_db().cursor()
-        cur.execute("select * from article where title like :data ", {"data":data})
-        row = cur.fetchall()
-        conn.commit()
-        return jsonify(row),200
-
+            if limit is None and article_id is None:
+                cur = conn.cursor()
+                cur.execute('''Select * from article''')
+                row = cur.fetchall()
+                if list(row) == []:
+                    executionState = False
+                return jsonify(row)
+            if article_id is not None:
+                cur = conn.cursor()
+                cur.execute("SELECT * from  article WHERE article_id="+article_id)
+                row = cur.fetchall()
+                if list(row) == []:
+                    executionState = False
+                return jsonify(row)
+        except:
+            executionState = False
+        finally:
+            if executionState == False:
+                return jsonify(message="Fail to retrive from db"), 409
+            else:
+                return jsonify(row),200
 
 # update article
 
-@app.route('/article',methods = ['PATCH'])
+@app.route('/article',methods = ['PUT'])
+@requires_auth
 def updateArticle():
-    if request.method == 'PATCH':
+    if request.method == 'PUT':
         executionState:bool = False
+        cur = get_db().cursor()
         try:
             data = request.get_json(force = True)
-            cur = get_db().cursor()
+
             tmod= datetime.datetime.now()
-            cur.execute("UPDATE article set content=?,date_modified=? where article_id=?", (data['content'],tmod,data['article_id']))
+            uid = request.authorization["username"]
+            pwd = request.authorization["password"]
+            cur.execute("UPDATE article set content=?,date_modified=? where article_id=? and author =?", (data['content'],tmod,data['article_id'], uid))
             if(cur.rowcount >=1):
                 executionState = True
-                    get_db().commit()
+            get_db().commit()
         except:
             get_db().rollback()
             print("Error in update")
@@ -117,11 +112,13 @@ def updateArticle():
 @app.route('/article', methods = ['DELETE'])
 def deleteArticle():
     if request.method == 'DELETE':
+        cur = get_db().cursor()
+        executionState:bool = False
         try:
-            article_id = request.args.get('article_id')
-            executionState:bool = False
-            cur = get_db().cursor()
-            cur.execute("delete from article where article_id=:article_id",{"article_id":article_id})
+            data = request.get_json(force=True)
+            uid = request.authorization["username"]
+            pwd = request.authorization["password"]
+            cur.execute("update article set is_active_article=0 where article_id=:article_id and author= :author AND EXISTS(SELECT 1 FROM article WHERE user_name=:author AND is_active_article=1)",{"article_id":data['article_id'], "author":uid})
             row = cur.fetchall()
             if cur.rowcount >= 1:
                 executionState = True
@@ -138,11 +135,5 @@ def deleteArticle():
 
 
 
-@app.route('/')
-def hello():
-    return "Home"
-
-
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port= 5002)
