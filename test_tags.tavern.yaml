@@ -1,57 +1,19 @@
 ---
-  test_name: Create a user
+  test_name: Add an article with a new tag
 
   stages:
-    - name: create a user
+    - name: Add an article with a new tag
       request:
-        url: http://localhost:5000/user
+        url: http://localhost:5003/tags
         json:
-          user_name: rohanb889
-          hashed_password: rohanb889
-          full_name: Rohan B
-          email_id: rohan.bd@gmail.com
+          article_id: 2
+          tags: ["#bigwest"]
         method: POST
+        auth:
+          - parag
+          - bhingre
+
         headers:
           content-type: application/json
       response:
-        status_code: 200
-        body:
-          message: Data Instersted Sucessfully
-
-      
-
-#
-# - name: update a user hashed_password
-#   request:
-#     url: http://localhost:5000/user
-#     json:
-#       user_name: rohanb2
-#       hashed_password: newOncdcdce
-#     method: PATCH
-#     auth:
-#       - rohanb2
-#       - rohan123
-#     headers:
-#       content-type: application/json
-#   response:
-#     status_code: 200
-#     body:
-#       message: Updated SucessFully
-
-# ---
-#
-# test_name: Delete user
-# stages:
-#     - name: delete a user
-#       request:
-#         url: http://localhost:5000/user
-#         method: DELETE
-#         auth:
-#             - rohanb2
-#             - rohan123
-#         headers:
-#           content-type: application/json
-#       response:
-#         status_code: 200
-#         body:
-#           message:"Data SucessFully deleted"
+        status_code: 201

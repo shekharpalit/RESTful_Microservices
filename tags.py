@@ -59,6 +59,7 @@ def addTagsToExistingArticle():
         data = request.get_json(force=True)
         tags =data['tags']
         #return 204 if not found
+        print(tags)
         executionState:bool = False
         try:
             for tag in tags:
@@ -71,7 +72,9 @@ def addTagsToExistingArticle():
                         #insert the relation if not exists
                         cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id) SELECT (:tag_id),(:article_id) WHERE NOT EXISTS(SELECT 1 FROM tag_article_mapping WHERE tag_id= :tag_id  AND article_id = :article_id)", {"tag_id":tag_id, "article_id":data['article_id']})
                     elif str(result)=="None":
-                        cur.execute("INSERT INTO tags(tag_name) VALUES(:tag_name)",{"tag_name":tag})
+                        print(".......")
+                        print(tag)
+                        cur.execute("INSERT INTO tags(tag_name) VALUES( :tag_name )",{"tag_name":tag})
                         new_tag_inserted_id =cur.lastrowid
                         cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id)VALUES(:tag_id, :article_id)",{"tag_id":new_tag_inserted_id,"article_id":data['article_id']})
         except:

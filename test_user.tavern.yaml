@@ -1,3 +1,41 @@
+---
+  test_name: Create a user
+
+  stages:
+    - name: create a user
+      request:
+        url: http://localhost:5001/user
+        json:
+          user_name: fg112
+          hashed_password: fg112
+          full_name: fg112
+          email_id: fg112
+        method: POST
+        headers:
+          content-type: application/json
+      response:
+        status_code: 200
+
+---
+  test_name: update a user's hashed_password
+
+  stages:
+    - name: update a user hashed_password
+      request:
+          url: http://localhost:5001/user
+          json:
+            hashed_password: bhingre
+          method: PATCH
+          auth:
+              - parag
+              - bhingre
+
+          headers:
+            content-type: application/json
+      response:
+          status_code: 200
+
+---
 test_name: Delete existing user
 
 stages:
@@ -12,4 +50,4 @@ stages:
       headers:
         content-type: application/json
     response:
-      status_code: 201
+      status_code: 200
