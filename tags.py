@@ -14,6 +14,7 @@ def getArticlesFromTag():
         data = request.args.get('tag')
         cur = get_db().cursor()
         tmod= datetime.now()
+        print("here")
         cur.execute("Select * from article where article_id IN(Select article_id from tag_article_mapping where tag_id in (Select tag_id from tags WHERE tag_name =:tag_name ))", {"tag_name":data})
         row = cur.fetchall()
         return jsonify(row),200
@@ -29,16 +30,18 @@ def getTagsFromArticle(article_id):
 
 
 @app.route('/tags', methods = ['POST'])
-def tags():
+def addTagstoArticle():
     if request.method == 'POST':
         data = request.get_json(force=True)
         executionState:bool = False
+        print(str(data))
+        cur = get_db().cursor()
         try:
-            cur = get_db().cursor()
             #check if tag exists or not
-            cur.execute("INSERT INTO tags VALUES (:tag_name)",{"tag_name": data['tag_name']})
+
+            cur.execute("INSERT INTO tags(tag_name) VALUES (:tag_name)",{"tag_name": data['tag_name']})
             tag_id = cur.lastrowid
-            cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id) SELECT :tag_id, article_id FROM article WHERE article_title IN (:article_title)",(tag_id,data['article_title']))
+            cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id) VALUES(:tag_id, :article_id) ",{"tag_id":tag_id,"article_id":data['article_id']})
             if (cur.rowcount >=1):
                 executionState =True
             get_db().commit()
@@ -47,9 +50,9 @@ def tags():
             print("Error")
         finally:
             if executionState:
-                return jsonify(message="Tags inserted successfully \n"),201
+                return jsonify(message="Tag inserted successfully \n"),201
             else:
-                return jsonify(message="Failed to insert tags"),409
+                return jsonify(message="Failed to insert tag"),409
 
 
 #adding a new and existing tag to the article
@@ -72,11 +75,13 @@ def addTagsToExistingArticle():
                         #insert the relation if not exists
                         cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id) SELECT (:tag_id),(:article_id) WHERE NOT EXISTS(SELECT 1 FROM tag_article_mapping WHERE tag_id= :tag_id  AND article_id = :article_id)", {"tag_id":tag_id, "article_id":data['article_id']})
                     elif str(result)=="None":
-                        print(".......")
-                        print(tag)
+
                         cur.execute("INSERT INTO tags(tag_name) VALUES( :tag_name )",{"tag_name":tag})
                         new_tag_inserted_id =cur.lastrowid
-                        cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id)VALUES(:tag_id, :article_id)",{"tag_id":new_tag_inserted_id,"article_id":data['article_id']})
+                        cur.execute("INSERT INTO tag_article_mapping (tag_id, article_id) VALUES (:tag_id, :article_id)",{"tag_id":new_tag_inserted_id,"article_id":data['article_id']})
+            if (cur.rowcount >=1):
+                executionState =True
+            get_db().commit()
         except:
             get_db().rollback()
             print("Error")
@@ -93,14 +98,19 @@ def addTagsToExistingArticle():
 @app.route('/tags', methods = ['DELETE'])
 def deleteTagFromArticle():
     if request.method == 'DELETE':
-        tag_name = request.args.get('tag_name')
-        article_id = request.args.get('article_id')
+        data = request.get_json(force=True)
+        #article_id = request.args.get('article_id')
         #print(tag_name+article_id)
+        executionState:bool = False
         try:
+            print(str(data))
             cur = get_db().cursor()
             #check if tag name exists or not
-            cur.execute("delete from tag_article_mapping where tag_id IN ( Select tag_id from tags WHERE tag_name =:tag_name) AND article_id=:article_id",{"tag_name":tag_name,"article_id":article_id})
+            cur.execute("DELETE from tag_article_mapping where tag_id IN ( Select tag_id from tags WHERE tag_name =:tag_name) AND article_id=:article_id",{"tag_name":data['tag_name'],"article_id":data['article_id']})
             #check for query result
+
+            if (cur.rowcount >=1):
+                executionState =True
             get_db().commit()
         except:
             get_db().rollback()

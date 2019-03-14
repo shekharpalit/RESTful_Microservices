@@ -7,12 +7,23 @@
         url: http://localhost:5003/tags
         json:
           article_id: 2
-          tags: ["#bigwest"]
+          tag_name: '#bigwest'
         method: POST
-        auth:
-          - parag
-          - bhingre
+        headers:
+          content-type: application/json
+      response:
+        status_code: 201
+---
 
+  test_name: 	List all articles with the new tag
+  stages:
+    - name: Add an article with a new tag
+      request:
+        url: http://localhost:5003/tags
+        json:
+          article_id: 2
+          tag_name: '#bigwest'
+        method: POST
         headers:
           content-type: application/json
       response:

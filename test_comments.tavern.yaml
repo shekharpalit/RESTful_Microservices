@@ -7,17 +7,16 @@
         url: http://localhost:5000/comment
         auth:
             - parag
-            - bhingre11
+            - bhingre
+
         json:
-          comment: Hey!!!!! I am from San Jose
+          comment: 'Hey!!!!! I am from San Jose'
           article_id: 20
         method: POST
         headers:
           content-type: application/json
       response:
         status_code: 409
-        body:
-          message: Cannot add comment. Test successful
 
 ---
  test_name: Post an anonymous comment on an article
@@ -27,15 +26,13 @@
      request:
        url: http://localhost:5000/comment
        json:
-         comment: Hey!!!!! this article is awesome
+         comment: 'Hey!!!!! this article is awesome'
          article_id: 1
        method: POST
        headers:
          content-type: application/json
      response:
-       status_code: 200
-       body:
-         message: Commment added successfully by Anonymous Coward
+       status_code: 201
 ---
 test_name: Post an authenticated comment on an article
 
@@ -45,17 +42,16 @@ stages:
       url: http://localhost:5000/comment
       auth:
         - parag
-        - bhingre11
+        - bhingre
+
       json:
-        comment: Hey!!!!! this article is from valid user
+        comment: "Hey!!!!! this article is from valid user"
         article_id: 1
       method: POST
       headers:
         content-type: application/json
     response:
-      status_code: 200
-      body:
-        message: Commment added successfully authenticated user
+      status_code: 201
 
 ---
 test_name: Comment order
@@ -69,5 +65,3 @@ stages:
         content-type: application/json
     response:
       status_code: 200
-      body:
-        message: Commment Retrieved Sucessfully
