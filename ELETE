@@ -1,7 +1,0 @@
-HTTP/1.0 405 METHOD NOT ALLOWED
-Content-Type: text/html
-Allow: DELETE, POST, OPTIONS
-Content-Length: 178
-Server: Werkzeug/0.14.1 Python/3.6.5
-Date: Fri, 08 Mar 2019 02:32:05 GMT
-
