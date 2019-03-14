@@ -1,57 +1,73 @@
 ---
-  test_name: Create a user
+  test_name: Adding a comment to an article that dosen't exist
 
   stages:
-    - name: create a user
+    - name: Add a comment to an article that dosen't exist
       request:
-        url: http://localhost:5000/user
+        url: http://localhost:5000/comment
+        auth:
+            - parag
+            - bhingre11
         json:
-          user_name: rohanb889
-          hashed_password: rohanb889
-          full_name: Rohan B
-          email_id: rohan.bd@gmail.com
+          comment: Hey!!!!! I am from San Jose
+          article_id: 20
         method: POST
         headers:
           content-type: application/json
       response:
-        status_code: 200
+        status_code: 409
         body:
-          message: Data Instersted Sucessfully
+          message: Cannot add comment. Test successful
 
-      
+---
+ test_name: Post an anonymous comment on an article
 
-#
-# - name: update a user hashed_password
-#   request:
-#     url: http://localhost:5000/user
-#     json:
-#       user_name: rohanb2
-#       hashed_password: newOncdcdce
-#     method: PATCH
-#     auth:
-#       - rohanb2
-#       - rohan123
-#     headers:
-#       content-type: application/json
-#   response:
-#     status_code: 200
-#     body:
-#       message: Updated SucessFully
+ stages:
+   - name: Post an anonymous comment on an article
+     request:
+       url: http://localhost:5000/comment
+       json:
+         comment: Hey!!!!! this article is awesome
+         article_id: 1
+       method: POST
+       headers:
+         content-type: application/json
+     response:
+       status_code: 200
+       body:
+         message: Commment added successfully by Anonymous Coward
+---
+test_name: Post an authenticated comment on an article
 
-# ---
-#
-# test_name: Delete user
-# stages:
-#     - name: delete a user
-#       request:
-#         url: http://localhost:5000/user
-#         method: DELETE
-#         auth:
-#             - rohanb2
-#             - rohan123
-#         headers:
-#           content-type: application/json
-#       response:
-#         status_code: 200
-#         body:
-#           message:"Data SucessFully deleted"
+stages:
+  - name: Post an authenticated comment on an article
+    request:
+      url: http://localhost:5000/comment
+      auth:
+        - parag
+        - bhingre11
+      json:
+        comment: Hey!!!!! this article is from valid user
+        article_id: 1
+      method: POST
+      headers:
+        content-type: application/json
+    response:
+      status_code: 200
+      body:
+        message: Commment added successfully authenticated user
+
+---
+test_name: Comment order
+
+stages:
+  - name: return comments in order
+    request:
+      url: "http://localhost:5000/comment?article_id=1"
+      method: GET
+      headers:
+        content-type: application/json
+    response:
+      status_code: 200
+      body:
+        message: Commment Retrieved Sucessfully
