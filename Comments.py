@@ -8,8 +8,6 @@ from authentication import *
 
 app = Flask(__name__)
 
-
-AuthState = True
 def check_auth(username, password):
     cur = get_db().cursor().execute("SELECT user_name, hashed_password from users WHERE user_name=?", (username,))
     row = cur.fetchall()
@@ -117,12 +115,12 @@ def retriveComments():
         executionState:bool = False
         cur = get_db().cursor()
         try: #move the try block after the below for test case if the data is none or not then only try db connection
-            data = request.args.get('art_id')
+            data = request.args.get('article_id')
             data1 = request.args.get('number')
             executionState = True
 
             if data is not None and data1 is not None:
-                cur.execute("SELECT timestamp, comment FROM(SELECT * FROM comments WHERE art_id="+data+" ORDER BY timestamp DESC LIMIT :data1)",{"data1":data1})
+                cur.execute("SELECT timestamp, comment FROM(SELECT * FROM comments WHERE article_id="+data+" ORDER BY timestamp DESC LIMIT :data1)",{"data1":data1})
                 retriveNcomments = cur.fetchall()
                 get_db().commit()
                 if list(retriveNcomments) == []:
@@ -130,7 +128,7 @@ def retriveComments():
                 return jsonify(retriveNcomments)
 
             if data is not None and data1 is None:
-                cur.execute("SELECT comment from comments WHERE art_id ="+data)
+                cur.execute("SELECT comment from comments WHERE article_id="+data)
                 retriveAllComments = cur.fetchall()
                 get_db().commit()
                 if list(retriveAllComments) == []:
