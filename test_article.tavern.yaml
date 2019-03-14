@@ -7,19 +7,15 @@ includes:
 stages:
     - name: Posting an article without authenticating
       request:
-        url: "http://localhost:5000/articles"
+        url: "http://localhost:5002/article"
         json:
           title: web back end
-          body: This is the body of article
-          author: sa
-          user_id: rohanb2
+          content: This is the body of article
         method: POST
-        headers:
+        headerss:
           content-type: application/json
       response:
-        status_code: 401
----
-
+        status_code: 409
 ---
 test_name: try to post an article with wrong password.
 
@@ -28,19 +24,19 @@ includes:
 stages:
     - name: Password is incorrect.
       request:
-        url: "http://localhost:5000/articles"
+        url: "http://localhost:5002/articles"
         auth:
-          - Shekhar12345
-          - hello
+          - parag
+          - bhingre11
+
         json:
-          title: Unemployment
-          body: "This ia article based on unemployment."
-          content: abcdef
+          title: web back end
+          content: This is the body of article
         method: POST
         headers:
           content-type: application/json
       response:
-        status_code: 401
+        status_code: 409
 ---
 
 ---
@@ -54,11 +50,12 @@ stages:
       request:
         url: "http://localhost:5000/articles"
         auth:
-          - Shekhar12345
-          - hello
+          - parag
+          - bhingre
+
         json:
-          content: This ia article based on campus life
-          title: Campus life
+          title: web back end
+          content: This is the body of article
         method: POST
         headers:
           content-type: application/json
@@ -72,14 +69,14 @@ stages:
 test_name: retrieve the newly posted article.
 
 includes:
-
 stages:
     - name: Retrieved the article.
       request:
-        url: "http://localhost:5000/articles/1"
+        url: "http://localhost:5000/articles?limit=1"
         auth:
-          - sa
-          - a
+          - parag
+          - bhingre1
+
         method: GET
         headers:
           content-type: application/json
