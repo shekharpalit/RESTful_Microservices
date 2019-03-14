@@ -1,59 +1,107 @@
 ---
-  test_name: test the articles microservice
 
-  stages:
-    - name: create an article
+test_name: Post an article without authenticating.
+
+includes:
+
+stages:
+    - name: Posting an article without authenticating
       request:
-        url: http://localhost:5000/article
+        url: "http://localhost:5000/articles"
         json:
-          title: Test
-          author: rohanb2
-          content: Lorem ipsum dolor
+          title: web back end
+          body: This is the body of article
+          author: sa
+          user_id: rohanb2
         method: POST
+        headers:
+          content-type: application/json
+      response:
+        status_code: 401
+---
+
+---
+test_name: try to post an article with wrong password.
+
+includes:
+
+stages:
+    - name: Password is incorrect.
+      request:
+        url: "http://localhost:5000/articles"
         auth:
           - Shekhar12345
-          - shekhar12345
+          - hello
+        json:
+          title: Unemployment
+          body: "This ia article based on unemployment."
+          content: abcdef
+        method: POST
+        headers:
+          content-type: application/json
+      response:
+        status_code: 401
+---
+
+---
+
+test_name: make sure article is posted successfully.
+
+includes:
+
+stages:
+    - name: New article posted.
+      request:
+        url: "http://localhost:5000/articles"
+        auth:
+          - Shekhar12345
+          - hello
+        json:
+          content: This ia article based on campus life
+          title: Campus life
+        method: POST
+        headers:
+          content-type: application/json
+      response:
+        status_code: 201
+
+---
+
+---
+
+test_name: retrieve the newly posted article.
+
+includes:
+
+stages:
+    - name: Retrieved the article.
+      request:
+        url: "http://localhost:5000/articles/1"
+        auth:
+          - sa
+          - a
+        method: GET
         headers:
           content-type: application/json
       response:
         status_code: 200
-        body:
-          message: Data Instersted Sucessfully
 
+---
 
+---
 
-#
-# - name: update a user hashed_password
-#   request:
-#     url: http://localhost:5000/user
-#     json:
-#       user_name: rohanb2
-#       hashed_password: newOncdcdce
-#     method: PATCH
-#     auth:
-#       - rohanb2
-#       - rohan123
-#     headers:
-#       content-type: application/json
-#   response:
-#     status_code: 200
-#     body:
-#       message: Updated SucessFully
+test_name: check that the newly posted article is the most recent.
 
-# ---
-#
-# test_name: Delete user
-# stages:
-#     - name: delete a user
-#       request:
-#         url: http://localhost:5000/user
-#         method: DELETE
-#         auth:
-#             - rohanb2
-#             - rohan123
-#         headers:
-#           content-type: application/json
-#       response:
-#         status_code: 200
-#         body:
-#           message:"Data SucessFully deleted"
+includes:
+
+stages:
+    - name: Check recent article.
+      request:
+        url: "http://localhost:5000/articles/1"
+        method: GET
+        headers:
+          content-type: application/json
+      response:
+        status_code: 200
+
+---

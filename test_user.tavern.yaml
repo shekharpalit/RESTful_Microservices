@@ -1,57 +1,15 @@
----
-  test_name: Create a user
+test_name: Delete existing user
 
-  stages:
-    - name: create a user
-      request:
-        url: http://localhost:5000/user
-        json:
-          user_name: rohanb889
-          hashed_password: rohanb889
-          full_name: Rohan B
-          email_id: rohan.bd@gmail.com
-        method: POST
-        headers:
-          content-type: application/json
-      response:
-        status_code: 200
-        body:
-          message: Data Instersted Sucessfully
+stages:
+  - name: Make sure you delete existing user
+    request:
+      url: http://localhost:5001/user
+      auth:
+        - parag
+        - bhingre
 
-      
-
-#
-# - name: update a user hashed_password
-#   request:
-#     url: http://localhost:5000/user
-#     json:
-#       user_name: rohanb2
-#       hashed_password: newOncdcdce
-#     method: PATCH
-#     auth:
-#       - rohanb2
-#       - rohan123
-#     headers:
-#       content-type: application/json
-#   response:
-#     status_code: 200
-#     body:
-#       message: Updated SucessFully
-
-# ---
-#
-# test_name: Delete user
-# stages:
-#     - name: delete a user
-#       request:
-#         url: http://localhost:5000/user
-#         method: DELETE
-#         auth:
-#             - rohanb2
-#             - rohan123
-#         headers:
-#           content-type: application/json
-#       response:
-#         status_code: 200
-#         body:
-#           message:"Data SucessFully deleted"
+      method: DELETE
+      headers:
+        content-type: application/json
+    response:
+      status_code: 201

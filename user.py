@@ -20,7 +20,7 @@ def InsertUser():
         try:
             date_created = datetime.datetime.now()
             is_active = 1
-            hash_password = pwd_context.encrypt(data['hashed_password'])
+            hash_password = pwd_context.hash(data['hashed_password'])
             cur.execute( "INSERT INTO users ( user_name, hashed_password, full_name, email_id, date_created, is_active ) VALUES (:user_name, :hashed_password, :full_name, :email_id, :date_created, :is_active)",
             {"user_name":data['user_name'], "hashed_password":hash_password, "full_name":data['full_name'], "email_id":data['email_id'], "date_created":date_created,"is_active":is_active})
             if(cur.rowcount >=1):
@@ -48,7 +48,7 @@ def UpdateUser():
             data  = request.get_json(force=True)
             uid = request.authorization["username"]
             pwd = request.authorization["password"]
-            hash_password = pwd_context.encrypt(data['hashed_password'])
+            hash_password = pwd_context.hash(data['hashed_password'])
             cur.execute("UPDATE users SET hashed_password=? WHERE user_name=? AND EXISTS(SELECT 1 FROM users WHERE user_name=? AND is_active=1)", (hash_password, uid,uid))
             if(cur.rowcount >=1):
                 executionState = True
