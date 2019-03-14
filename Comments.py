@@ -1,39 +1,73 @@
-from flask import Flask, request, g
+from flask import Flask, request
 from flask import jsonify
 import json
-import sqlite3
 from datetime import datetime
+from DatabaseInstance import get_db
+from authentication import *
 
 
 app = Flask(__name__)
-DATABASE = 'com.db'
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)  #create a database instance and use it for later execution
-        print("database instance is created")
-    return db
 
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
+AuthState = True
+def check_auth(username, password):
+    cur = get_db().cursor().execute("SELECT user_name, hashed_password from users WHERE user_name=?", (username,))
+    row = cur.fetchall()
+    if row[0][0] == username and pwd_context.verify(password,row[0][1]):
+        return True
+    else:
+        return False
+
+def authenticate():
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+isAuthenticated = True
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if request.authorization:
+            uid = request.authorization["username"]
+            pwd = request.authorization["password"]
+            if not uid or not pwd or check_auth(uid, pwd) == False:
+                return authenticate()
+            else:
+                return f(*args, **kwargs)
+
+        else:
+            global isAuthenticated
+            isAuthenticated = False
+            return f(*args, **kwargs)
+
+    return decorated
+
 
 #Add comments to the database
 @app.route('/comment', methods = ['POST'])
+@requires_auth
 def AddComment():
     if request.method == 'POST':
         executionState:bool = False
         cur = get_db().cursor()
+        data = request.get_json(force=True)
         try:
-            data = request.get_json(force=True)
-            tmod = datetime.now()
-            cur.execute("INSERT INTO comments (comment, art_id, tag_ID, timestamp) VALUES (:comment, :art_id, :tag_ID, :timestamp) ",{"comment":data['comment'], "art_id":data['art_id'], "tag_ID":data['tag_ID'], "timestamp": tmod})
-            get_db().commit()
-            if cur.rowcount >= 1:
-                executionState = True
+            if  isAuthenticated == False:
+                time_created = datetime.now()
+                cur.execute("INSERT INTO comments (comment, user_name, article_id, timestamp) VALUES (:comment, :user_name,:article_id, :timestamp) ",{"comment":data['comment'], "user_name":"Anonymous Coward", "article_id":data['article_id'], "timestamp": time_created})
+                get_db().commit()
+                if cur.rowcount >= 1:
+                    executionState = True
+            else:
+                uid = request.authorization["username"]
+                pwd = request.authorization["password"]
+                time_created = datetime.now()
+                cur.execute("INSERT INTO comments (comment, user_name, article_id, timestamp) VALUES (:comment, :user_name,:article_id, :timestamp) ",{"comment":data['comment'], "user_name":uid, "article_id":data['article_id'], "timestamp": time_created})
+                get_db().commit()
+                if cur.rowcount >= 1:
+                    executionState = True
+
         except:
             get_db().rollback()   #if it fails to execute rollback the database
             executionState = False
@@ -45,18 +79,30 @@ def AddComment():
 
 #delete a comment from the database
 @app.route('/comment', methods = ['DELETE'])
+@requires_auth
 def deleteComment():
     if request.method == 'DELETE':
         executionState:bool = False
         cur = get_db().cursor()
         try:
             data = request.args.get('comment_id')
-            cur.execute("DELETE from comments WHERE comment_ID ="+data)
-            get_db().commit()
-            if cur.rowcount >= 1:
-                executionState = True
+            cur.execute("SELECT user_name FROM comments WHERE comment_id="+data)
+            row = cur.fetchall()
+            if row[0][0] == "Anonymous Coward":
+                cur.execute("DELETE from comments WHERE user_name ='Anonymous Coward' AND comment_id="+data)
+                if cur.rowcount >= 1:
+                    executionState = True
+                get_db().commit()
+            if  isAuthenticated == True:
+                uid = request.authorization["username"]
+                pwd = request.authorization["password"]
+                if row[0][0] == uid:
+                    cur.execute("DELETE from comments WHERE user_name=? AND comment_id=?",(uid,data))
+                    if cur.rowcount >= 1:
+                        executionState = True
+                    get_db().commit()
         except:
-            get_db().rollback() #if it fails to execute rollback the database
+            get_db().rollback()                  #if it fails to execute rollback the database
             executionState = False
         finally:
             if executionState:
@@ -99,19 +145,30 @@ def retriveComments():
                 return jsonify(message="Fail"), 409
 
 #Update the comments in the database for a particular user
-@app.route('/comment', methods =['PATCH'])
+@app.route('/comment', methods =['PUT'])
+@requires_auth
 def UpdateComments():
-    if request.method == 'PATCH':
+    if request.method == 'PUT':
         executionState:bool = False
         cur = get_db().cursor()
         try:
             data = request.get_json(force = True)
-            tmod = datetime.now()
-            cur.execute("UPDATE comments set comment = ?,timestamp=? where art_id =? AND comment_id =?",  (data['comment'],tmod, data['art_id'], data['comment_id']))
-            get_db().commit()
-            if cur.rowcount >= 1:
-                executionState = True
-
+            cur.execute("SELECT user_name FROM comments WHERE comment_id=?",(data['comment_id']))
+            row = cur.fetchall()
+            timeCreated = datetime.now()
+            if row[0][0] == "Anonymous Coward":
+                cur.execute("UPDATE comments set comment = ?,timestamp=? where user_name = 'Anonymous Coward' AND comment_id =?", (data['comment'],timeCreated, data['comment_id']))
+                if cur.rowcount >= 1:
+                    executionState = True
+                get_db().commit()
+            if  isAuthenticated == True:
+                uid = request.authorization["username"]
+                pwd = request.authorization["password"]
+                if row[0][0] == uid:
+                    cur.execute("UPDATE comments set comment = ?,timestamp=? where user_name =? AND comment_id =?",  (data['comment'],timeCreated, uid, data['comment_id']))
+                    if cur.rowcount >= 1:
+                        executionState = True
+                    get_db().commit()
         except:
             get_db().rollback() #if it fails to execute rollback the database
             executionState = False
