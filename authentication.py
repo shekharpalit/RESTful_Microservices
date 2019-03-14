@@ -17,7 +17,7 @@ def check_auth(username, password):
 def authenticate():
     return Response(
     'Could not verify your access level for that URL.\n'
-    'You have to login with proper credentials', 401,
+    'You have to login with proper credentials', 403,
     {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
 def requires_auth(f):
@@ -31,6 +31,6 @@ def requires_auth(f):
             else:
                 return f(*args, **kwargs)
         except:
-             return "Need authentication for this operation\n"
+             return "Need authentication for this operation\n", 401
 
     return decorated
