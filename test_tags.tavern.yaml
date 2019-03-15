@@ -2,12 +2,12 @@
   test_name: Add an article with a new tag
 
   stages:
-    - name: Add an article with a new tag
+    - name: Adding an article with a new tag
       request:
         url: http://localhost:5003/tags
         json:
           article_id: 2
-          tag_name: '#bigwest'
+          tag_name: '#bigwestr33344'
         method: POST
         headers:
           content-type: application/json
@@ -15,16 +15,60 @@
         status_code: 201
 ---
 
-  test_name: 	List all articles with the new tag
+  test_name: List all articles with the new tag
+
   stages:
-    - name: Add an article with a new tag
+    - name: the list of article should be returned
       request:
-        url: http://localhost:5003/tags
+        url: 'http://localhost:5003/tags?tag=%23fullerton'
+        method: GET
+      response:
+        status_code: 200
+
+---
+
+  test_name: Add another tag to the article
+
+  stages:
+    - name: Add another tag to the article
+      request:
+         url: http://127.0.0.1:5003/tags
+         method: PUT
+         json:
+           article_id: 7
+           tags: ["#testHagta43","#testHagtag353242"]
+         headers:
+           content-type: application/json
+      response:
+        status_code: 201
+
+---
+
+    test_name: Delete one of the tags from the article
+    stages:
+      - name: delete the tags related to article
+        request:
+          url: http://127.0.0.1:5003/tags
+          method: DELETE
+          json:
+            article_id: 2
+            tag_name: '#sample'
+          headers:
+            content-type: application/json
+        response:
+          status_code: 200
+
+---
+  test_name: Add a tag to an article that doesn’t exist
+  stages:
+    - name: delete tags of article that does not exists
+      request:
+        url: http://127.0.0.1:5003/tags
+        method: DELETE
         json:
-          article_id: 2
-          tag_name: '#bigwest'
-        method: POST
+          article_id: 70
+          tag_name: '#testHagtag1'
         headers:
           content-type: application/json
       response:
-        status_code: 201
+        status_code: 409

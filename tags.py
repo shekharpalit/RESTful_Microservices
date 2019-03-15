@@ -17,7 +17,10 @@ def getArticlesFromTag():
         print("here")
         cur.execute("Select * from article where article_id IN(Select article_id from tag_article_mapping where tag_id in (Select tag_id from tags WHERE tag_name =:tag_name ))", {"tag_name":data})
         row = cur.fetchall()
-        return jsonify(row),200
+        if len(row) ==0:
+            return "No articles containing the tags", 204
+        else:
+            return jsonify(row),200
 
 #get tags from the url utility
 @app.route('/tags/<string:article_id>',methods = ['GET'])
@@ -38,13 +41,18 @@ def addTagstoArticle():
         cur = get_db().cursor()
         try:
             #check if tag exists or not
-
-            cur.execute("INSERT INTO tags(tag_name) VALUES (:tag_name)",{"tag_name": data['tag_name']})
-            tag_id = cur.lastrowid
-            cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id) VALUES(:tag_id, :article_id) ",{"tag_id":tag_id,"article_id":data['article_id']})
-            if (cur.rowcount >=1):
-                executionState =True
-            get_db().commit()
+            #check if the article exists or not
+            cur.execute("SELECT * FROM article WHERE article_id=:article_id",{"article_id":data['article_id']})
+            articleExists = cur.fetchall()
+            if articleExists != ():
+                cur.execute("INSERT INTO tags(tag_name) VALUES (:tag_name)",{"tag_name": data['tag_name']})
+                tag_id = cur.lastrowid
+                cur.execute("INSERT INTO tag_article_mapping(tag_id, article_id) VALUES(:tag_id, :article_id) ",{"tag_id":tag_id,"article_id":data['article_id']})
+                if (cur.rowcount >=1):
+                    executionState =True
+                get_db().commit()
+            if articleExists ==():
+                return jsonify(message="Article does not exist"),409
         except:
             get_db().rollback()
             print("Error")
@@ -85,8 +93,6 @@ def addTagsToExistingArticle():
         except:
             get_db().rollback()
             print("Error")
-            #print(er.args[0])
-            #print(er.message)
         finally:
             if executionState:
                 return jsonify(message="Added Tags to an existing article"),201
@@ -102,16 +108,17 @@ def deleteTagFromArticle():
         #article_id = request.args.get('article_id')
         #print(tag_name+article_id)
         executionState:bool = False
+        cur = get_db().cursor()
         try:
-            print(str(data))
-            cur = get_db().cursor()
-            #check if tag name exists or not
-            cur.execute("DELETE from tag_article_mapping where tag_id IN ( Select tag_id from tags WHERE tag_name =:tag_name) AND article_id=:article_id",{"tag_name":data['tag_name'],"article_id":data['article_id']})
-            #check for query result
-
-            if (cur.rowcount >=1):
-                executionState =True
-            get_db().commit()
+            cur.execute("SELECT article_id FROM article WHERE article_id=:article_id",{"article_id":data['article_id']})
+            result = cur.fetchone()
+            if str(result)!="None":
+                #check if tag name exists or not
+                cur.execute("DELETE from tag_article_mapping where tag_id IN ( Select tag_id from tags WHERE tag_name =:tag_name) AND article_id=:article_id",{"tag_name":data['tag_name'],"article_id":data['article_id']})
+                #check for query result
+                if (cur.rowcount >=1):
+                    executionState =True
+                get_db().commit()
         except:
             get_db().rollback()
             print("Error")
