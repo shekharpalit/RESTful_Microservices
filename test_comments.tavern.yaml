@@ -10,8 +10,8 @@
             - bhingre
 
         json:
-          comment: 'Hey!!!!! I am from San Jose'
-          article_id: 20
+          comment: 'Hey!!!!! I am from San Jose1111'
+          article_id: 201
         method: POST
         headers:
           content-type: application/json

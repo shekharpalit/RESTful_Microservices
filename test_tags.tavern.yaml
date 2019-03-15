@@ -7,7 +7,7 @@
         url: http://localhost:5300/tags
         json:
           article_id: 2
-          tag_name: '#bigwuuuuu44'
+          tag_name: '#bigwuxuddddz44'
         method: POST
         auth:
           - parag
@@ -24,7 +24,7 @@
   stages:
     - name: the list of article should be returned
       request:
-        url: 'http://localhost:5300/tags?tag=%23fullerton'
+        url: 'http://localhost:5300/tags?tag=%23bigwest'
         method: GET
       response:
         status_code: 200
@@ -43,8 +43,8 @@
            - bhingre
 
          json:
-           article_id: 7
-           tags: ["#testHagtaddd43","#testHagtdddag353242"]
+           article_id: 2
+           tags: ["#tesawoooxscdd43","#sacvoddoovvvv"]
          headers:
            content-type: application/json
       response:
@@ -63,8 +63,8 @@
             - bhingre
 
           json:
-            article_id: 2
-            tag_name: '#fullerton'
+            article_id: 7
+            tag_name: '#testHagtag63'
           headers:
             content-type: application/json
         response:

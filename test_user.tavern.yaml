@@ -6,15 +6,15 @@
       request:
         url: http://localhost:5000/user
         json:
-          user_name: fg112
-          hashed_password: fg112
-          full_name: fg112
-          email_id: fg112
+          user_name: fg112111
+          hashed_password: fg112111
+          full_name: fg112111
+          email_id: fg112111
         method: POST
         headers:
           content-type: application/json
       response:
-        status_code: 200
+        status_code: 201
 
 ---
   test_name: update a user's hashed_password
@@ -33,7 +33,7 @@
           headers:
             content-type: application/json
       response:
-          status_code: 200
+          status_code: 201
 
 ---
 test_name: Delete existing user
