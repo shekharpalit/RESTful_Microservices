@@ -130,16 +130,16 @@ def retriveComments():
                 retriveNcomments = cur.fetchall()
                 get_db().commit()
                 if list(retriveNcomments) == []:
-                    return "No such value exists\n"
-                return jsonify(retriveNcomments)
+                    return "No such value exists\n", 204
+                return jsonify(retriveNcomments), 200
 
             if data is not None and data1 is None:
                 cur.execute("SELECT comment from comments WHERE article_id="+data)
                 retriveAllComments = cur.fetchall()
                 get_db().commit()
                 if list(retriveAllComments) == []:
-                    return "No such value exists\n"
-                return jsonify(len(retriveAllComments))
+                    return "No such value exists\n", 204
+                return jsonify(len(retriveAllComments)), 200
         except:
             get_db().rollback() #if it fails to execute rollback the database
             executionState = False
