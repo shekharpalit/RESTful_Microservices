@@ -4,7 +4,7 @@
   stages:
     - name: create a user
       request:
-        url: http://localhost:5001/user
+        url: http://localhost:5000/user
         json:
           user_name: fg112
           hashed_password: fg112
@@ -22,7 +22,7 @@
   stages:
     - name: update a user hashed_password
       request:
-          url: http://localhost:5001/user
+          url: http://localhost:5000/user
           json:
             hashed_password: bhingre
           method: PATCH
@@ -41,7 +41,7 @@ test_name: Delete existing user
 stages:
   - name: Make sure you delete existing user
     request:
-      url: http://localhost:5001/user
+      url: http://localhost:5000/user
       auth:
         - parag
         - bhingre

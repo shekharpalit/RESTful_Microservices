@@ -4,7 +4,7 @@
   stages:
     - name: Add a comment to an article that dosen't exist
       request:
-        url: http://localhost:5000/comment
+        url: http://localhost:5100/comment
         auth:
             - parag
             - bhingre
@@ -24,7 +24,7 @@
  stages:
    - name: Post an anonymous comment on an article
      request:
-       url: http://localhost:5000/comment
+       url: http://localhost:5100/comment
        json:
          comment: 'Hey!!!!! this article is awesome'
          article_id: 1
@@ -39,7 +39,7 @@ test_name: Post an authenticated comment on an article
 stages:
   - name: Post an authenticated comment on an article
     request:
-      url: http://localhost:5000/comment
+      url: http://localhost:5100/comment
       auth:
         - parag
         - bhingre
@@ -59,7 +59,7 @@ test_name: Comment order
 stages:
   - name: return comments in order
     request:
-      url: "http://localhost:5000/comment?article_id=1"
+      url: "http://localhost:5100/comment?article_id=1"
       method: GET
       headers:
         content-type: application/json

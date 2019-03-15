@@ -3,40 +3,40 @@
   stages:
   - name: Posting an article without authenticating
     request:
-      url: http://localhost:5000/article
+      url: http://localhost:5200/article
       json:
         title: web back end
         content: This is the body of article1
       method: POST
-      headerss:
+      headers:
         content-type: application/json
     response:
-      status_code: 409
+      status_code: 401
 ---
 
   test_name: try to post an article with wrong password.
   stages:
   - name: Password is incorrect.
     request:
-      url: http://localhost:5002/articles
+      url: http://localhost:5200/article
+      method: POST
       auth:
         - parag
-        - bhingre
+        - bhingre11
 
       json:
         title: web back end
         content: This is the body of article
-        method: POST
-        headers:
+      headers:
           content-type: application/json
-      response:
-        status_code: 409
+    response:
+        status_code: 403
 ---
   test_name: make sure article is posted successfully
   stages:
   - name: New article posted.
     request:
-      url: http://localhost:5000/article
+      url: http://localhost:5200/article
       method: POST
       auth:
         - parag
@@ -47,7 +47,7 @@
       headers:
           content-type: application/json
     response:
-      status_code: 201
+      status_code: 200
 
 ---
   test_name: retrieve the newly posted article.
@@ -55,7 +55,7 @@
   stages:
     - name: Retrieved the article.
       request:
-        url: http://localhost:5000/articles?limit=1
+        url: http://localhost:5200/article?limit=1
         auth:
           - parag
           - bhingre
@@ -69,7 +69,7 @@
   stages:
     - name: Check recent article.
       request:
-        url: http://localhost:5000/articles/1
+        url: http://localhost:5200/article
         method: GET
         headers:
           content-type: application/json

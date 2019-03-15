@@ -4,7 +4,7 @@
   stages:
     - name: Adding an article with a new tag
       request:
-        url: http://localhost:5003/tags
+        url: http://localhost:5300/tags
         json:
           article_id: 2
           tag_name: '#bigwuuuuu44'
@@ -24,7 +24,7 @@
   stages:
     - name: the list of article should be returned
       request:
-        url: 'http://localhost:5003/tags?tag=%23fullerton'
+        url: 'http://localhost:5300/tags?tag=%23fullerton'
         method: GET
       response:
         status_code: 200
@@ -36,7 +36,7 @@
   stages:
     - name: Add another tag to the article
       request:
-         url: http://127.0.0.1:5003/tags
+         url: http://127.0.0.1:5300/tags
          method: PUT
          auth:
            - parag
@@ -56,7 +56,7 @@
     stages:
       - name: delete the tags related to article
         request:
-          url: http://127.0.0.1:5003/tags
+          url: http://127.0.0.1:5300/tags
           method: DELETE
           auth:
             - parag
@@ -75,7 +75,7 @@
   stages:
     - name: delete tags of article that does not exists
       request:
-        url: http://127.0.0.1:5003/tags
+        url: http://127.0.0.1:5300/tags
         method: DELETE
         auth:
           - parag
