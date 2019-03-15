@@ -32,7 +32,7 @@ def InsertUser():
             print("Error")
         finally:
             if executionState:
-                return jsonify(message="Data Instersted Sucessfully"), 200
+                return jsonify(message="Data Instersted Sucessfully"), 201
             else:
                 return jsonify(message="Failed to insert data"), 409
 
@@ -58,7 +58,7 @@ def UpdateUser():
             print("Error")
         finally:
             if executionState:
-                return jsonify(message="Updated SucessFully"), 200
+                return jsonify(message="Updated SucessFully"), 201
             else:
                 return jsonify(message="Failed to update the data"), 409
 
