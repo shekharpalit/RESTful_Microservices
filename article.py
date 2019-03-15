@@ -34,7 +34,7 @@ def insertarticle():
             print("Error")
         finally:
             if executionState:
-                return jsonify(message="Data Instersted Sucessfully"), 200
+                return jsonify(message="Data Instersted Sucessfully"), 201
             else:
                 return jsonify(message="Failed to insert data"), 409
 
@@ -87,7 +87,7 @@ def latestArticle():
             if executionState == False:
                 return jsonify(message="Fail to retrive from db"), 409
             else:
-                return jsonify(row),201
+                return jsonify(row), 200
 
 # update article
 
@@ -117,7 +117,7 @@ def updateArticle():
             print("Error in update")
         finally:
             if executionState:
-                return jsonify(message="Updated Article SucessFully"), 200
+                return jsonify(message="Updated Article SucessFully"), 201
             else:
                 return jsonify(message="Failed to update Article"), 409
 
@@ -146,11 +146,11 @@ def deleteArticle():
             print("Error")
         finally:
             if executionState:
-                return jsonify(message="Deleted Article SucessFully"),200
+                return jsonify(message="Deleted Article SucessFully"), 200
             else:
-                return jsonify(message="Failed to delete Article"),409
+                return jsonify(message="Failed to delete Article"), 409
 
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port= 5000)
+    app.run(debug=True)
