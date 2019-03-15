@@ -45,40 +45,49 @@ def insertarticle():
 @app.route('/article',methods = ['GET'])
 def latestArticle():
     if request.method == 'GET': # try except
-        cur = get_db().cursor()
         limit = request.args.get('limit')
         article_id = request.args.get('article_id')
-        title = request.args.get('title')
+        metadata = request.args.get('metadata')
+        executionState:bool = True
+        cur = get_db().cursor()
+        print(metadata)
         try:
             if limit is not None :
-                cur = conn.cursor()
-                cur.execute("select * from article  where isActiveArticle = 1 order by date_created desc limit :data",  {"data":data})
+                cur.execute("select * from article  where is_active_article = 1 order by date_created desc limit :limit",  {"limit":limit})
                 row = cur.fetchall()
                 if list(row) == []:
-                    executionState = False
+                    return "No such value exists\n"
                 return jsonify(row)
 
-            if limit is None and article_id is None:
-                cur = conn.cursor()
+            if limit is None and article_id is None and metadata is None:
                 cur.execute('''Select * from article''')
                 row = cur.fetchall()
                 if list(row) == []:
-                    executionState = False
+                    return "No such value exists\n"
                 return jsonify(row)
+
             if article_id is not None:
-                cur = conn.cursor()
                 cur.execute("SELECT * from  article WHERE article_id="+article_id)
                 row = cur.fetchall()
                 if list(row) == []:
-                    executionState = False
+                    return "No such value exists\n"
                 return jsonify(row)
+
+            if metadata is not None:
+                cur.execute("select title,author,date_created,date_modified from article  where is_active_article = 1 order by date_created desc limit :metadata", {"metadata":metadata})
+                row = cur.fetchall()
+                if list(row) == []:
+                    return "No such value exists\n"
+                return jsonify(row)
+
         except:
+            get_db().rollback()
             executionState = False
         finally:
             if executionState == False:
                 return jsonify(message="Fail to retrive from db"), 409
             else:
-                return jsonify(row),200
+                return jsonify(row)
 
 # update article
 
@@ -136,4 +145,4 @@ def deleteArticle():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port= 5002)
+    app.run(debug=True, port= 5000)
