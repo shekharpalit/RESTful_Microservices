@@ -87,7 +87,7 @@ def latestArticle():
             if executionState == False:
                 return jsonify(message="Fail to retrive from db"), 409
             else:
-                return jsonify(row)
+                return jsonify(row),201
 
 # update article
 
@@ -103,10 +103,15 @@ def updateArticle():
             tmod= datetime.datetime.now()
             uid = request.authorization["username"]
             pwd = request.authorization["password"]
-            cur.execute("UPDATE article set content=?,date_modified=? where article_id=? and author =?", (data['content'],tmod,data['article_id'], uid))
-            if(cur.rowcount >=1):
-                executionState = True
-            get_db().commit()
+            cur.execute("select * from article where article_id=?",(data['article_id'],))
+            res=cur.fetchall()
+            if len(res) >0:
+                cur.execute("UPDATE article set content=?,date_modified=? where article_id=? and author =?", (data['content'],tmod,data['article_id'], uid))
+                if(cur.rowcount >=1):
+                    executionState = True
+                get_db().commit()
+            else:
+                return jsonify(message="Article does not exist"), 409
         except:
             get_db().rollback()
             print("Error in update")
@@ -127,11 +132,14 @@ def deleteArticle():
             data = request.get_json(force=True)
             uid = request.authorization["username"]
             pwd = request.authorization["password"]
-            cur.execute("update article set is_active_article=0 where article_id=:article_id and author= :author AND EXISTS(SELECT 1 FROM article WHERE user_name=:author AND is_active_article=1)",{"article_id":data['article_id'], "author":uid})
-            row = cur.fetchall()
-            if cur.rowcount >= 1:
-                executionState = True
-            get_db().commit()
+            cur.execute("select * from article where article_id=?",(data['article_id'],))
+            res=cur.fetchall()
+            if len(res) >0:
+                cur.execute("update article set is_active_article=0 where article_id= :article_id and author= :author AND EXISTS(SELECT 1 FROM article WHERE author=:author AND is_active_article=1)",{"article_id":data['article_id'], "author":uid})
+                row = cur.fetchall()
+                if cur.rowcount >= 1:
+                    executionState = True
+                get_db().commit()
 
         except:
             get_db().rollback()
