@@ -7,8 +7,12 @@
         url: http://localhost:5003/tags
         json:
           article_id: 2
-          tag_name: '#bigwestr33344'
+          tag_name: '#bigwuuuuu44'
         method: POST
+        auth:
+          - parag
+          - bhingre
+
         headers:
           content-type: application/json
       response:
@@ -34,9 +38,13 @@
       request:
          url: http://127.0.0.1:5003/tags
          method: PUT
+         auth:
+           - parag
+           - bhingre
+
          json:
            article_id: 7
-           tags: ["#testHagta43","#testHagtag353242"]
+           tags: ["#testHagtaddd43","#testHagtdddag353242"]
          headers:
            content-type: application/json
       response:
@@ -50,9 +58,13 @@
         request:
           url: http://127.0.0.1:5003/tags
           method: DELETE
+          auth:
+            - parag
+            - bhingre
+
           json:
             article_id: 2
-            tag_name: '#sample'
+            tag_name: '#fullerton'
           headers:
             content-type: application/json
         response:
@@ -65,6 +77,10 @@
       request:
         url: http://127.0.0.1:5003/tags
         method: DELETE
+        auth:
+          - parag
+          - bhingre
+
         json:
           article_id: 70
           tag_name: '#testHagtag1'
