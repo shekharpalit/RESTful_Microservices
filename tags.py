@@ -52,7 +52,7 @@ def addTagstoArticle():
                     executionState =True
                 get_db().commit()
             if articleExists ==():
-                return jsonify(message="Article does not exist"),409
+                return jsonify(message="Article does not exist"), 204
         except:
             get_db().rollback()
             print("Error")
@@ -133,4 +133,4 @@ def deleteTagFromArticle():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port = 5003)
+    app.run(debug=True)
