@@ -146,7 +146,7 @@ def retriveComments():
 
         finally:
             if executionState == False:
-                return jsonify(message="Fail"), 409
+                return jsonify(message="Fail"), 204
 
 #Update the comments in the database for a particular user
 @app.route('/comment', methods =['PUT'])
@@ -184,4 +184,4 @@ def UpdateComments():
                 return jsonify(message="Fail"), 409
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
