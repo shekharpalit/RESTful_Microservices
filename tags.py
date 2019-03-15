@@ -4,6 +4,7 @@ import json
 import sqlite3
 from datetime import datetime
 from DatabaseInstance import get_db
+from authentication import *
 
 app = Flask(__name__)
 
@@ -13,14 +14,12 @@ def getArticlesFromTag():
     if request.method == 'GET':
         data = request.args.get('tag')
         cur = get_db().cursor()
-        tmod= datetime.now()
-        print("here")
         cur.execute("Select * from article where article_id IN(Select article_id from tag_article_mapping where tag_id in (Select tag_id from tags WHERE tag_name =:tag_name ))", {"tag_name":data})
         row = cur.fetchall()
         if len(row) ==0:
             return "No articles containing the tags", 204
         else:
-            return jsonify(row),200
+            return jsonify(row), 200
 
 #get tags from the url utility
 @app.route('/tags/<string:article_id>',methods = ['GET'])
@@ -29,10 +28,11 @@ def getTagsFromArticle(article_id):
         cur = get_db().cursor()
         cur.execute("SELECT tag_name from tags WHERE tag_id IN (SELECT tag_id from tag_article_mapping WHERE article_id=:article_id )", {"article_id":article_id})
         row = cur.fetchall()
-        return jsonify(row),200
+        return jsonify(row), 200
 
 
 @app.route('/tags', methods = ['POST'])
+@requires_auth
 def addTagstoArticle():
     if request.method == 'POST':
         data = request.get_json(force=True)
@@ -65,6 +65,7 @@ def addTagstoArticle():
 
 #adding a new and existing tag to the article
 @app.route('/tags', methods = ['PUT'])
+@requires_auth
 def addTagsToExistingArticle():
     if request.method == 'PUT':
         data = request.get_json(force=True)
@@ -102,6 +103,7 @@ def addTagsToExistingArticle():
 
 
 @app.route('/tags', methods = ['DELETE'])
+@requires_auth
 def deleteTagFromArticle():
     if request.method == 'DELETE':
         data = request.get_json(force=True)
