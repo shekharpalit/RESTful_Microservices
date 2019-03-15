@@ -53,16 +53,20 @@ def AddComment():
         try:
             if  isAuthenticated == False:
                 time_created = datetime.now()
-                cur.execute("INSERT INTO comments (comment, user_name, article_id, timestamp) VALUES (:comment, :user_name,:article_id, :timestamp) ",{"comment":data['comment'], "user_name":"Anonymous Coward", "article_id":data['article_id'], "timestamp": time_created})
-                get_db().commit()
-                if cur.rowcount >= 1:
-                    executionState = True
+                cur.execute("SELECT * FROM article WHERE article_id=?",(data['article_id'],))
+                count = len(cur.fetchall())
+                if count >=1:
+                    cur.execute("INSERT INTO comments (comment, user_name, article_id, timestamp) VALUES (:comment, :user_name,:article_id, :timestamp) ",{"comment":data['comment'], "user_name":"Anonymous Coward", "article_id":data['article_id'], "timestamp": time_created})
+                    get_db().commit()
+                    if cur.rowcount >= 1:
+                        executionState = True
             else:
                 uid = request.authorization["username"]
                 pwd = request.authorization["password"]
                 time_created = datetime.now()
                 cur.execute("SELECT * FROM article WHERE article_id=?",(data['article_id'],))
-                if cur.rowcount >=1:
+                count = len(cur.fetchall())
+                if count >=1:
                     cur.execute("INSERT INTO comments (comment, user_name, article_id, timestamp) VALUES (:comment, :user_name,:article_id, :timestamp) ",{"comment":data['comment'], "user_name":uid, "article_id":data['article_id'], "timestamp": time_created})
                     get_db().commit()
                     if cur.rowcount >= 1:
@@ -135,7 +139,7 @@ def retriveComments():
                 get_db().commit()
                 if list(retriveAllComments) == []:
                     return "No such value exists\n"
-                return jsonify(retriveAllComments)
+                return jsonify(len(retriveAllComments))
         except:
             get_db().rollback() #if it fails to execute rollback the database
             executionState = False
