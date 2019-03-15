@@ -1,104 +1,77 @@
 ---
-
-test_name: Post an article without authenticating.
-
-includes:
-
-stages:
-    - name: Posting an article without authenticating
-      request:
-        url: "http://localhost:5002/article"
-        json:
-          title: web back end
-          content: This is the body of article
-        method: POST
-        headerss:
-          content-type: application/json
-      response:
-        status_code: 409
+  test_name: Post an article without authenticating.
+  stages:
+  - name: Posting an article without authenticating
+    request:
+      url: http://localhost:5000/article
+      json:
+        title: web back end
+        content: This is the body of article1
+      method: POST
+      headerss:
+        content-type: application/json
+    response:
+      status_code: 409
 ---
-test_name: try to post an article with wrong password.
 
-includes:
+  test_name: try to post an article with wrong password.
+  stages:
+  - name: Password is incorrect.
+    request:
+      url: http://localhost:5002/articles
+      auth:
+        - parag
+        - bhingre
 
-stages:
-    - name: Password is incorrect.
-      request:
-        url: "http://localhost:5002/articles"
-        auth:
-          - parag
-          - bhingre11
-
-        json:
-          title: web back end
-          content: This is the body of article
+      json:
+        title: web back end
+        content: This is the body of article
         method: POST
         headers:
           content-type: application/json
       response:
         status_code: 409
 ---
+  test_name: make sure article is posted successfully
+  stages:
+  - name: New article posted.
+    request:
+      url: http://localhost:5000/article
+      method: POST
+      auth:
+        - parag
+        - bhingre
+      json:
+        title: web back end1111111
+        content: This is the body of article
+      headers:
+          content-type: application/json
+    response:
+      status_code: 201
 
 ---
+  test_name: retrieve the newly posted article.
 
-test_name: make sure article is posted successfully.
-
-includes:
-
-stages:
-    - name: New article posted.
+  stages:
+    - name: Retrieved the article.
       request:
-        url: "http://localhost:5000/articles"
+        url: http://localhost:5000/articles?limit=1
         auth:
           - parag
           - bhingre
 
-        json:
-          title: web back end
-          content: This is the body of article
-        method: POST
-        headers:
-          content-type: application/json
-      response:
-        status_code: 201
-
----
-
----
-
-test_name: retrieve the newly posted article.
-
-includes:
-stages:
-    - name: Retrieved the article.
-      request:
-        url: "http://localhost:5000/articles?limit=1"
-        auth:
-          - parag
-          - bhingre1
-
         method: GET
-        headers:
-          content-type: application/json
       response:
         status_code: 200
 
 ---
-
----
-
-test_name: check that the newly posted article is the most recent.
-
-includes:
-
-stages:
+  test_name: check that the newly posted article is the most recent.
+  stages:
     - name: Check recent article.
       request:
-        url: "http://localhost:5000/articles/1"
+        url: http://localhost:5000/articles/1
         method: GET
         headers:
           content-type: application/json
       response:
         status_code: 200
-
----
