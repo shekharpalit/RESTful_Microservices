@@ -1,4 +1,4 @@
-# RESTful_Micoservices 
+# RESTful_Microservices 
 The goal of this project is to develop 4 micro services for a blog using Python Flask.
 
 ## Microservices
